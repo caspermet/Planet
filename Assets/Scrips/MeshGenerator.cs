@@ -7,8 +7,8 @@ public static class MeshGenerator
     public static MeshData GenerateTerrainMesh(float scale)
     {
 
-        int width = 254;
-        int height = 254;
+        int width = 50;
+        int height = 50;
         float topLeftX = (width - 1) / -2f;
         float topLeftZ = (height - 1) / 2f;
 

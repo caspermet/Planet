@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class MapGenerator : MonoBehaviour {
 
+    const float viewerMoveThresholdForChunkUpdate = 50f;
+    const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
+
     public float scale = 2f;
     public int chunksVisibleInViewDst;
 
@@ -11,34 +14,26 @@ public class MapGenerator : MonoBehaviour {
     public Transform viewer;
     public Texture2D mapTexture;
 
-    private float oldScale;
-
-    public int size;
-
     public Material material;
-
-
-    Dictionary<Vector2, TerrainChunk> terrainChunkDictionary = new Dictionary<Vector2, TerrainChunk>();
-    Dictionary<float, PreObjects> preTerrainChunkDictionary = new Dictionary<float, PreObjects>();
-    Dictionary<float, PreMesh> PreMeshDictionary = new Dictionary<float, PreMesh>();
-
     public Material instanceMaterial;
-    private Mesh instanceMesh;
     public int subMeshIndex = 0;
 
-    private int instanceCount;
+    Dictionary<float, PreMesh> PreMeshDictionary = new Dictionary<float, PreMesh>();
+
+    float oldScale;
+    int instanceCount;
+
+    static Vector2 viewerPositionOld;
 
     DrawMesh drawMesh;
 
     void Start()
-    {
-   
+    {  
         oldScale = scale;
 
         instanceCount = (chunksVisibleInViewDst * 2 + 1) * (chunksVisibleInViewDst * 2 + 1);
+      //  CreatePreMesh();
 
-        CreatePreMesh();
-        instanceMesh = PreMeshDictionary[1].GetMesh();
         UpdateChunkMesh();
     }
 
@@ -49,8 +44,15 @@ public class MapGenerator : MonoBehaviour {
             UpdateChunkMesh();
             oldScale = scale;
         }
+        viewerPosition = new Vector3(viewer.position.x, viewer.position.y, viewer.position.z);
 
-        Graphics.DrawMeshInstancedIndirect(instanceMesh, subMeshIndex, instanceMaterial, new Bounds(Vector3.zero, new Vector3(100.0f, 100.0f, 100.0f)), argsBuffer);
+        if ((viewerPositionOld - viewerPosition).sqrMagnitude > sqrViewerMoveThresholdForChunkUpdate)
+        {
+            viewerPositionOld = viewerPosition;
+            Debug.Log(viewerPosition);
+        }
+
+        drawMesh.Draw();
     }
 
     void CreatePreMesh()
@@ -67,8 +69,6 @@ public class MapGenerator : MonoBehaviour {
     void UpdateChunkMesh()
     {
 
-        viewerPosition = new Vector2(viewer.position.x, viewer.position.z);
-
         int currentChunkCoordX = Mathf.RoundToInt(0);
         int currentChunkCoordY = Mathf.RoundToInt(0);
 
@@ -80,57 +80,17 @@ public class MapGenerator : MonoBehaviour {
             for (int xOffset = -chunksVisibleInViewDst; xOffset <= chunksVisibleInViewDst; xOffset++)
             {
              
-                viewedChunkCoord[positionIndex] = new Vector4(currentChunkCoordX + xOffset, 0,currentChunkCoordY + yOffset, 1) * (size - 1);
+                viewedChunkCoord[positionIndex] = new Vector4((currentChunkCoordX + xOffset) * 5f , 0,(currentChunkCoordY + yOffset) * 5f, 5f);
                 positionIndex++;
             }
         }
-        UpdateBuffers(viewedChunkCoord, PreMeshDictionary[1].GetMesh());
-      
+        
+        drawMesh = new DrawMesh(instanceCount, MeshGenerator.GenerateTerrainMesh(1).CreateMesh(), instanceMaterial, viewedChunkCoord);  
     }
-
-
 
     void OnDisable()
     {
-        if (positionBuffer != null)
-            positionBuffer.Release();
-        positionBuffer = null;
-
-        if (argsBuffer != null)
-            argsBuffer.Release();
-        argsBuffer = null;
-    }
-
-    public class TerrainChunk
-    {
-        GameObject meshObject;
-        Vector3 position;
-
-        MeshRenderer meshRenderer;
-        MeshFilter meshFilter;
-        MeshCollider meshCollider;
-
-        float scale;
-       
-
-        public TerrainChunk(GameObject meshObject, Vector2 coord, float scale)
-        {
-            this.meshObject = meshObject;
-            this.scale = scale;
-
-            meshRenderer = meshObject.AddComponent<MeshRenderer>();
-            meshFilter = meshObject.AddComponent<MeshFilter>();
-            meshCollider = meshObject.AddComponent<MeshCollider>();
-            position = meshObject.transform.position;
-            meshObject.transform.localScale = Vector3.one;
-            SetVisible(true);
-        }
-
-        public void SetVisible(bool visible)
-        {
-            meshObject.SetActive(visible);
-
-        }
+        drawMesh.Disable();
     }
 
     public class PreMesh
@@ -149,51 +109,12 @@ public class MapGenerator : MonoBehaviour {
            
             return preMesh;
         }
+
+        public float GetScale()
+        {
+            return scale;
+        }
         
     }
 
-    public class PreObjects
-    {
-        GameObject meshObject;
-        Vector2 position;
-        Vector3 position3d;
-
-        MeshRenderer meshRenderer;
-        MeshFilter meshFilter;
-        MeshCollider meshCollider;
-
-
-        public PreObjects(Material material, float scale, Texture2D mapTexture)
-        {
-            meshObject = new GameObject("Terrain Chunk");
-            meshRenderer = meshObject.AddComponent<MeshRenderer>();
-            meshFilter = meshObject.AddComponent<MeshFilter>();
-            meshCollider = meshObject.AddComponent<MeshCollider>();
-            meshRenderer.material = material;
-
-            meshRenderer.material.mainTexture = mapTexture;
-
-            meshObject.transform.localScale = Vector3.one;
-
-            meshFilter.mesh = MeshGenerator.GenerateTerrainMesh(scale).CreateMesh();
-
-            SetVisible(false);
-        }
-
-        public GameObject GetGameObject()
-        {
-            return meshObject;
-        }
-
-        public void DeleteObject()
-        {
-            Destroy(meshObject);
-        }
-
-        public void SetVisible(bool visible)
-        {
-            meshObject.SetActive(visible);
-
-        }
-    }
 }

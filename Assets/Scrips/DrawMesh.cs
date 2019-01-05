@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DrawMesh : MonoBehaviour {
+public class DrawMesh  {
 
     int instanceCount = 100000;
     Mesh instanceMesh;
@@ -10,8 +10,6 @@ public class DrawMesh : MonoBehaviour {
     int subMeshIndex = 0;
     Vector4[] positions;
 
-    int cachedInstanceCount = -1;
-    int cachedSubMeshIndex = -1;
     ComputeBuffer positionBuffer;
     ComputeBuffer argsBuffer;
     uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
@@ -19,12 +17,21 @@ public class DrawMesh : MonoBehaviour {
     public DrawMesh (int instanceCount, Mesh instanceMesh, Material instanceMaterial, Vector4[] positions)
     {
         this.instanceMesh = instanceMesh;
-        this.instanceCount = instanceCount;
+        this.instanceCount = instanceCount; 
         this.instanceMaterial = instanceMaterial;
         this.positions = positions;
+
+        argsBuffer = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
+
+        UpdateBuffers();
     }   
 
-    void UpdateBuffers()
+    public void Draw()
+    {
+        Graphics.DrawMeshInstancedIndirect(instanceMesh, subMeshIndex, instanceMaterial, new Bounds(Vector3.zero, new Vector3(100.0f, 100.0f, 100.0f)), argsBuffer);
+    }
+
+    public  void UpdateBuffers()
     {
         // Ensure submesh index is in range
         if (instanceMesh != null)
@@ -53,15 +60,16 @@ public class DrawMesh : MonoBehaviour {
 
         argsBuffer.SetData(args);
 
-        cachedInstanceCount = instanceCount;
-        cachedSubMeshIndex = subMeshIndex;
     }
 
-    void Disable()
+    public void Disable()
     {
         if (positionBuffer != null)
             positionBuffer.Release();
         positionBuffer = null;
+        if (argsBuffer != null)
+            argsBuffer.Release();
+        argsBuffer = null;
 
     }
 }
