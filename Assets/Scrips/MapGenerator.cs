@@ -17,25 +17,28 @@ public class MapGenerator : MonoBehaviour {
 
     public Material material;
 
+
     Dictionary<Vector2, TerrainChunk> terrainChunkDictionary = new Dictionary<Vector2, TerrainChunk>();
     Dictionary<float, PreObjects> preTerrainChunkDictionary = new Dictionary<float, PreObjects>();
     Dictionary<float, PreMesh> PreMeshDictionary = new Dictionary<float, PreMesh>();
 
-
     public Material instanceMaterial;
+    private Mesh instanceMesh;
     public int subMeshIndex = 0;
 
+    private int instanceCount;
 
-    private int cachedInstanceCount = -1;
-    private int cachedSubMeshIndex = -1;
-    private ComputeBuffer positionBuffer;
-    private ComputeBuffer argsBuffer;
-    private uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
+    DrawMesh drawMesh;
 
     void Start()
     {
+   
         oldScale = scale;
+
+        instanceCount = (chunksVisibleInViewDst * 2 + 1) * (chunksVisibleInViewDst * 2 + 1);
+
         CreatePreMesh();
+        instanceMesh = PreMeshDictionary[1].GetMesh();
         UpdateChunkMesh();
     }
 
@@ -46,6 +49,8 @@ public class MapGenerator : MonoBehaviour {
             UpdateChunkMesh();
             oldScale = scale;
         }
+
+        Graphics.DrawMeshInstancedIndirect(instanceMesh, subMeshIndex, instanceMaterial, new Bounds(Vector3.zero, new Vector3(100.0f, 100.0f, 100.0f)), argsBuffer);
     }
 
     void CreatePreMesh()
@@ -61,13 +66,11 @@ public class MapGenerator : MonoBehaviour {
 
     void UpdateChunkMesh()
     {
-        Debug.Log("Hello");
+
         viewerPosition = new Vector2(viewer.position.x, viewer.position.z);
 
         int currentChunkCoordX = Mathf.RoundToInt(0);
         int currentChunkCoordY = Mathf.RoundToInt(0);
-
-        int instanceCount = (chunksVisibleInViewDst * 2 + 1) * (chunksVisibleInViewDst * 2 + 1);
 
         Vector4[] viewedChunkCoord = new Vector4[instanceCount];
         int positionIndex = 0;
@@ -76,46 +79,26 @@ public class MapGenerator : MonoBehaviour {
         {
             for (int xOffset = -chunksVisibleInViewDst; xOffset <= chunksVisibleInViewDst; xOffset++)
             {
-                Debug.Log(positionIndex);
+             
                 viewedChunkCoord[positionIndex] = new Vector4(currentChunkCoordX + xOffset, 0,currentChunkCoordY + yOffset, 1) * (size - 1);
                 positionIndex++;
             }
         }
-        UpdateBuffers(viewedChunkCoord, instanceCount, PreMeshDictionary[1].GetMesh());
-        Debug.Log("Hello");
-        Graphics.DrawMeshInstancedIndirect(PreMeshDictionary[1].GetMesh(), subMeshIndex, instanceMaterial, new Bounds(Vector3.zero, new Vector3(100.0f, 100.0f, 100.0f)), argsBuffer);
+        UpdateBuffers(viewedChunkCoord, PreMeshDictionary[1].GetMesh());
+      
     }
 
-    void UpdateBuffers(Vector4[] positions, int instanceCount, Mesh instanceMesh)
-    {
-        // Ensure submesh index is in range
-        if (instanceMesh != null)
-            subMeshIndex = Mathf.Clamp(subMeshIndex, 0, instanceMesh.subMeshCount - 1);
 
-        // Positions
+
+    void OnDisable()
+    {
         if (positionBuffer != null)
             positionBuffer.Release();
-        positionBuffer = new ComputeBuffer(instanceCount, 16);
+        positionBuffer = null;
 
-        positionBuffer.SetData(positions);
-        instanceMaterial.SetBuffer("positionBuffer", positionBuffer);
-
-        // Indirect args
-        if (instanceMesh != null)
-        {
-            args[0] = (uint)instanceMesh.GetIndexCount(subMeshIndex);
-            args[1] = (uint)instanceCount;
-            args[2] = (uint)instanceMesh.GetIndexStart(subMeshIndex);
-            args[3] = (uint)instanceMesh.GetBaseVertex(subMeshIndex);
-        }
-        else
-        {
-            args[0] = args[1] = args[2] = args[3] = 0;
-        }
-        argsBuffer.SetData(args);
-
-        cachedInstanceCount = instanceCount;
-        cachedSubMeshIndex = subMeshIndex;
+        if (argsBuffer != null)
+            argsBuffer.Release();
+        argsBuffer = null;
     }
 
     public class TerrainChunk
@@ -163,6 +146,7 @@ public class MapGenerator : MonoBehaviour {
 
         public Mesh GetMesh()
         {
+           
             return preMesh;
         }
         

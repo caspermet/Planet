@@ -53,10 +53,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+     <Compile Include="Assets\Scrips\DrawMesh.cs" />
      <Compile Include="Assets\Scrips\ExampleClass.cs" />
      <Compile Include="Assets\Scrips\MapGenerator.cs" />
      <Compile Include="Assets\Scrips\MeshGenerator.cs" />
      <None Include="Assets\Shaders\Terrain.shader" />
+     <None Include="Assets\Shaders\InstancedSurfaceShader.shader" />
  <Reference Include="UnityEditor.StandardEvents">
  <HintPath>C:/Users/Matej/Documents/Teren/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
  </Reference>
