@@ -4,11 +4,11 @@ using System.Collections;
 public static class MeshGenerator
 {
 
-    public static MeshData GenerateTerrainMesh(float scale)
+    public static MeshData GenerateTerrainMesh(int chunkSize)
     {
 
-        int width = 50;
-        int height = 50;
+        int width = chunkSize;
+        int height = chunkSize;
         float topLeftX = (width - 1) / -2f;
         float topLeftZ = (height - 1) / 2f;
 
@@ -20,7 +20,7 @@ public static class MeshGenerator
             for (int x = 0; x < width; x++)
             {
 
-                meshData.vertices[vertexIndex] = new Vector3((topLeftX + x) * scale, 0, (topLeftZ - y) * scale);
+                meshData.vertices[vertexIndex] = new Vector3((topLeftX + x), 0, (topLeftZ - y));
                 meshData.uvs[vertexIndex] = new Vector2(x / (float)width, y / (float)height);
 
                 if (x < width - 1 && y < height - 1)

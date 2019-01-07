@@ -53,6 +53,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+     <Compile Include="Assets\Scrips\Chunk.cs" />
+     <Compile Include="Assets\Scrips\ChunkFace.cs" />
      <Compile Include="Assets\Scrips\DrawMesh.cs" />
      <Compile Include="Assets\Scrips\ExampleClass.cs" />
      <Compile Include="Assets\Scrips\MapGenerator.cs" />

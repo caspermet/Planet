@@ -3,10 +3,14 @@
 Shader "Instanced/Terrain" {
 	Properties{
 		_Color("Color", Color) = (1,1,1,1)
-		_MainTex("Albedo (RGB)", 2D) = "white" {}
+		_MainTex("Texture", 2D) = "white" {}
 		_Glossiness("Smoothness", Range(0,1)) = 0.5
 		_Metallic("Metallic", Range(0,1)) = 0.0
 		_Scale("Scale", float) = 1.0
+		_HeightMin("Height Min", Float) = -1
+		_HeightMax("Height Max", Float) = 1
+		_ColorMin("Tint Color At Min", Color) = (0,0,0,1)
+		_ColorMax("Tint Color At Max", Color) = (1,1,1,1)
 	}
 		SubShader{
 			Tags { "RenderType" = "Opaque" }
@@ -41,11 +45,8 @@ Shader "Instanced/Terrain" {
 
 				void setup()
 				{
-#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+				#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
 					float4 data = positionBuffer[unity_InstanceID];
-
-					float rotation = data.w * data.w * _Time.y * 0.5f;
-					//rotate2D(data.xz, rotation);
 
 					unity_ObjectToWorld._11_21_31_41 = float4(data.w, 0, 0, 0);
 					unity_ObjectToWorld._12_22_32_42 = float4(0, data.w, 0, 0);
@@ -53,8 +54,8 @@ Shader "Instanced/Terrain" {
 					unity_ObjectToWorld._14_24_34_44 = float4(data.xyz, 1);
 					unity_WorldToObject = unity_ObjectToWorld;
 					unity_WorldToObject._14_24_34 *= -1;
-					unity_WorldToObject._11_22_33 = 1.0f / unity_WorldToObject._11_22_33;
-#endif
+					unity_WorldToObject._11_22_33 = 1.0f / unity_WorldToObject._11_22_33; 
+				#endif
 				}
 
 			half _Glossiness;
@@ -62,10 +63,19 @@ Shader "Instanced/Terrain" {
 			fixed4 _Color;
 			float _Scale;
 
+			fixed4 _ColorMin;
+			fixed4 _ColorMax;
+			float _HeightMin;
+			float _HeightMax;
+
 			void vert(inout appdata_full v) {
+			#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+				float4 data = positionBuffer[unity_InstanceID];
 
 				float4 wolrldPosition = mul(unity_ObjectToWorld, v.vertex);
-				v.vertex.y = tex2Dlod(_MainTex, float4(wolrldPosition.xz / 100, 0, 0)) * 3 / _Scale;
+		
+				v.vertex.y = tex2Dlod(_MainTex, float4(wolrldPosition.xz / 1000, 0, 0)) * 3 / data.w;
+			#endif
 			}
 
 			// Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
@@ -76,16 +86,18 @@ Shader "Instanced/Terrain" {
 			UNITY_INSTANCING_BUFFER_END(Props)
 
 			void surf(Input IN, inout SurfaceOutputStandard o) {
-				// Albedo comes from a texture tinted by color
+				// Albedo comes from a texture tinted by color	
 
 				float4 wolrldPosition = mul(unity_ObjectToWorld, float4(IN.worldPos, 0));
+		
 				fixed4 c = tex2D(_MainTex, wolrldPosition.xz / 1000);
-				o.Albedo = c.rgb;
 
-				// Metallic and smoothness come from slider variables
-				o.Metallic = _Metallic;
-				o.Smoothness = _Glossiness;
-				o.Alpha = c.a;
+				float h = (_HeightMax - IN.worldPos.y) / (_HeightMax - _HeightMin);
+				fixed4 tintColor = lerp(_ColorMax.rgba, _ColorMin.rgba, h);
+
+				o.Albedo = c.rgb * tintColor.rgb;
+				o.Alpha = c.a * tintColor.a;
+
 			}
 			ENDCG
 		}
