@@ -32,6 +32,7 @@ public static class MeshGenerator
                 vertexIndex++;
             }
         }
+        meshData.CreateMesh();
 
         return meshData;
 
@@ -43,6 +44,8 @@ public class MeshData
     public Vector3[] vertices;
     public int[] triangles;
     public Vector2[] uvs;
+
+    private Mesh mesh;
 
     int triangleIndex;
 
@@ -61,13 +64,18 @@ public class MeshData
         triangleIndex += 3;
     }
 
-    public Mesh CreateMesh()
+    public void CreateMesh()
     {
-        Mesh mesh = new Mesh();
+        mesh = new Mesh();
         mesh.vertices = vertices;
         mesh.triangles = triangles;
         mesh.uv = uvs;
         mesh.RecalculateNormals();
+     
+    }
+
+    public Mesh GetMesh()
+    {
         return mesh;
     }
 

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class MapGenerator : MonoBehaviour {
-    public int chunksVisibleInViewDst;
 
     public Transform viewer;
 
@@ -16,13 +15,17 @@ public class MapGenerator : MonoBehaviour {
 
     void Start()
     {
-
-        chunk = new Chunk(512.0f, chunksVisibleInViewDst, chunkSize, instanceMaterial, viewer);
+        chunk = new Chunk(512.0f,  chunkSize, instanceMaterial, viewer);
     }
 
     void Update()
     {
         chunk.Update();
+    }
+
+    void OnDisable()
+    {
+        chunk.Disable();
     }
 
 

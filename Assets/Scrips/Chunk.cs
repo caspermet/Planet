@@ -6,11 +6,10 @@ public class Chunk {
     const float viewerMoveThresholdForChunkUpdate = 50f;
     const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
 
-    private float scale;
-    private int chunksVisibleInViewDst;
-    private int chunkSize = 200;
-
     private List<Vector4> positionsList = new List<Vector4>();
+
+    private float scale;
+    private int chunkSize = 200;
 
     private Material material;
     private Material instanceMaterial;
@@ -21,16 +20,22 @@ public class Chunk {
     private static Vector2 viewerPositionOld;
     private Transform viewer;
 
-    public Chunk(float scale, int chunksVisibleInViewDst, int chunkSize,  Material instanceMaterial, Transform viewer)
+    private ChunkFace chunkFace;
+
+    private MeshData meshData;
+
+    public Chunk(float scale, int chunkSize,  Material instanceMaterial, Transform viewer)
     {
         this.scale = scale;
-        this.chunksVisibleInViewDst = chunksVisibleInViewDst;
         this.chunkSize = chunkSize;
-        this.positionsList = positionsList;
         this.instanceMaterial = instanceMaterial;
         this.viewer = viewer;
 
-        UpdateChunkMesh();
+        chunkFace = new ChunkFace(null, new Vector3(0, 0, 0), this.scale, chunkSize);
+        meshData = MeshGenerator.GenerateTerrainMesh(chunkSize);
+        meshData.CreateMesh();
+
+        drawMesh = new DrawMesh();
     }
 
     public void Update()
@@ -43,28 +48,64 @@ public class Chunk {
             UpdateChunkMesh();
         }
 
-        drawMesh.Draw();
+        if (positionsList.Count > 0)
+        {
+           // Debug.Log(positionsList.Count);
+            drawMesh.Draw();
+        }
     }
 
     private void UpdateChunkMesh()
-    {
-        for (int yOffset = -chunksVisibleInViewDst; yOffset <= chunksVisibleInViewDst; yOffset++)
+    {      
+        List<ChunkFace> chunkFacesList = new List<ChunkFace>();
+        positionsList.Clear();
+
+        GetActiveChunksFromChunkTree(ref chunkFacesList, chunkFace);
+        foreach (var item in chunkFacesList)
         {
-            for (int xOffset = -chunksVisibleInViewDst; xOffset <= chunksVisibleInViewDst; xOffset++)
+            
+            var dist = Vector3.Distance(viewer.transform.position, item.GetBounds().ClosestPoint(viewer.transform.position));
+            Debug.Log(item.GetPositionToDraw());
+          /*  Debug.Log(dist);
+            Debug.Log(item.GetScale());*/
+
+            if (dist > item.GetScale())
             {
-                float scale = 1.0f;
-
-                positionsList.Add(new Vector4((xOffset) * (chunkSize - 1) * scale, 0, (yOffset) * (chunkSize - 1) * scale, scale));
-
+                item.MergeChunk();
+            }
+            else if(item.GetScale() > chunkSize)
+            {
+                item.SubDivide();
+            }
+            else if(item.GetGenerate())
+            {
+                positionsList.Add(item.GetPositionToDraw());
             }
         }
 
         Vector4[] viewedChunkCoord = positionsList.ToArray();
-
-        drawMesh = new DrawMesh(positionsList.Count, MeshGenerator.GenerateTerrainMesh(chunkSize).CreateMesh(), instanceMaterial, viewedChunkCoord);
+        if (viewedChunkCoord.Length > 0)
+        {
+            drawMesh.UpdateData(positionsList.Count, meshData.GetMesh(), instanceMaterial, viewedChunkCoord);
+        }
     }
 
-    void OnDisable()
+    private void GetActiveChunksFromChunkTree(ref List<ChunkFace> chunkFaceList, ChunkFace chunkTree)
+    {
+        if(chunkTree.getChunkTree() != null)
+        {
+            for (int i = 0; i < chunkTree.getChunkTree().Length; i++)
+            {
+                GetActiveChunksFromChunkTree(ref chunkFaceList, chunkTree.getChunkTree()[i]);
+            }
+        }
+        else
+        {
+            chunkFaceList.Add(chunkTree);
+        }
+    }
+
+    public void Disable()
     {
         drawMesh.Disable();
     }

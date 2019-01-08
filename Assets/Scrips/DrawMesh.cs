@@ -14,13 +14,15 @@ public class DrawMesh  {
     ComputeBuffer argsBuffer;
     uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
 
-    public DrawMesh (int instanceCount, Mesh instanceMesh, Material instanceMaterial, Vector4[] positions)
+    public void UpdateData (int instanceCount, Mesh instanceMesh, Material instanceMaterial, Vector4[] positions)
     {
         this.instanceMesh = instanceMesh;
         this.instanceCount = instanceCount; 
         this.instanceMaterial = instanceMaterial;
         this.positions = positions;
 
+        if (argsBuffer != null)
+            argsBuffer.Release();
         argsBuffer = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
 
         UpdateBuffers();

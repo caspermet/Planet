@@ -12,7 +12,9 @@ public class ChunkFace {
     private Vector3 position;
     private Vector4 positionToDraw;
 
-    private bool isGenerate;
+    private Bounds bounds;
+
+    public bool generated;
 
     public ChunkFace(ChunkFace parent, Vector3 position, float scale, int chunkSize)
     {
@@ -21,12 +23,30 @@ public class ChunkFace {
         this.scale = scale;
         this.chunkSize = chunkSize;
 
+        generated = true;
+
+        bounds = new Bounds(position, Vector2.one * chunkSize);
         positionToDraw = new Vector4((position.x) * (chunkSize - 1) * scale, position.y, (position.z) * (chunkSize - 1) * scale, scale);
+    }
 
-        isGenerate = true;
+    public ChunkFace[] getChunkTree()
+    {
+        return chunkTree;
+    }
 
-        if (parent != null)
-            parent.Dispose();
+    public Bounds GetBounds()
+    {
+        return bounds;
+    }
+
+    public float GetScale()
+    {
+        return scale;
+    }
+
+    public Vector4 GetPositionToDraw()
+    {
+        return positionToDraw;
     }
 
     public void MergeChunk()
@@ -37,9 +57,9 @@ public class ChunkFace {
         for (int i = 0; i < chunkTree.Length; i++)
         {
             chunkTree[i].MergeChunk();
-            chunkTree[i].Dispose();
         }
 
+        generated = true;
         chunkTree = null;
     }
 
@@ -50,6 +70,10 @@ public class ChunkFace {
 
         float newScale = scale / 2;
 
+        generated = false;
+
+        Debug.Log(position);
+        Debug.Log(position - stepLeft + stepUp);
 
         chunkTree = new ChunkFace[] {
                 new ChunkFace(this, position - stepLeft + stepUp, newScale, chunkSize),
@@ -57,12 +81,15 @@ public class ChunkFace {
                 new ChunkFace(this, position - stepLeft - stepUp, newScale, chunkSize),
                 new ChunkFace(this, position + stepLeft - stepUp, newScale, chunkSize)
             };
-
-        Dispose();
     }
 
-    public void Dispose()
+    public bool GetGenerate()
     {
-        isGenerate = false;
+        return generated;
+    }
+
+    public void SetGenerated(bool isGenerate)
+    {
+        generated = isGenerate;
     }
 }
