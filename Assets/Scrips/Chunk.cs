@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Chunk {
+    const float viewerMoveThresholdForChunkUpdate = 50f;
+    const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
 
     private float scale;
-    private int size;
     private int chunksVisibleInViewDst;
     private int chunkSize = 200;
 
@@ -14,15 +15,38 @@ public class Chunk {
     private Material material;
     private Material instanceMaterial;
 
-    DrawMesh drawMesh;
+    private DrawMesh drawMesh;
 
-    public Chunk(float scale, int size)
+    private static Vector2 viewerPosition;
+    private static Vector2 viewerPositionOld;
+    private Transform viewer;
+
+    public Chunk(float scale, int chunksVisibleInViewDst, int chunkSize,  Material instanceMaterial, Transform viewer)
     {
         this.scale = scale;
-        this.size = size;
+        this.chunksVisibleInViewDst = chunksVisibleInViewDst;
+        this.chunkSize = chunkSize;
+        this.positionsList = positionsList;
+        this.instanceMaterial = instanceMaterial;
+        this.viewer = viewer;
+
+        UpdateChunkMesh();
     }
 
-    void UpdateChunkMesh()
+    public void Update()
+    {
+        viewerPosition = new Vector3(viewer.position.x, viewer.position.y, viewer.position.z);
+
+        if ((viewerPositionOld - viewerPosition).sqrMagnitude > sqrViewerMoveThresholdForChunkUpdate)
+        {
+            viewerPositionOld = viewerPosition;
+            UpdateChunkMesh();
+        }
+
+        drawMesh.Draw();
+    }
+
+    private void UpdateChunkMesh()
     {
         for (int yOffset = -chunksVisibleInViewDst; yOffset <= chunksVisibleInViewDst; yOffset++)
         {
