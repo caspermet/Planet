@@ -12,12 +12,11 @@ public class Chunk {
     private int chunkSize = 200;
 
     private Material material;
-    private Material instanceMaterial;
 
     private DrawMesh drawMesh;
 
-    private static Vector2 viewerPosition;
-    private static Vector2 viewerPositionOld;
+    private static Vector3 viewerPosition;
+    private static Vector3 viewerPositionOld;
     private Transform viewer;
 
     private ChunkFace chunkFace;
@@ -28,29 +27,29 @@ public class Chunk {
     {
         this.scale = scale;
         this.chunkSize = chunkSize;
-        this.instanceMaterial = instanceMaterial;
         this.viewer = viewer;
 
         chunkFace = new ChunkFace(null, new Vector3(0, 0, 0), this.scale, chunkSize);
         meshData = MeshGenerator.GenerateTerrainMesh(chunkSize);
         meshData.CreateMesh();
 
-        drawMesh = new DrawMesh();
+        drawMesh = new DrawMesh(meshData.GetMesh(), instanceMaterial);
+
+        UpdateChunkMesh();
     }
 
     public void Update()
     {
         viewerPosition = new Vector3(viewer.position.x, viewer.position.y, viewer.position.z);
 
-        if ((viewerPositionOld - viewerPosition).sqrMagnitude > sqrViewerMoveThresholdForChunkUpdate)
+        if (viewerPositionOld != viewerPosition)
         {
             viewerPositionOld = viewerPosition;
             UpdateChunkMesh();
         }
-
+       // UpdateChunkMesh();
         if (positionsList.Count > 0)
         {
-           // Debug.Log(positionsList.Count);
             drawMesh.Draw();
         }
     }
@@ -61,32 +60,53 @@ public class Chunk {
         positionsList.Clear();
 
         GetActiveChunksFromChunkTree(ref chunkFacesList, chunkFace);
+        
         foreach (var item in chunkFacesList)
         {
-            
-            var dist = Vector3.Distance(viewer.transform.position, item.GetBounds().ClosestPoint(viewer.transform.position));
-            Debug.Log(item.GetPositionToDraw());
-          /*  Debug.Log(dist);
-            Debug.Log(item.GetScale());*/
 
-            if (dist > item.GetScale())
+            var dist = Vector3.Distance(viewer.position, item.GetBounds().ClosestPoint(viewer.position));
+            if (item.GetParrent() != null)
             {
-                item.MergeChunk();
+                var distParent = Vector3.Distance(viewer.position, item.GetParrent().GetBounds().ClosestPoint(viewer.position));
+
+                if (item.GetParrent() != null && distParent > item.GetParrent().GetScale() * chunkSize)
+                {
+                    Debug.Log("merge");
+                    if (item.GetParrent() != null)
+                    {
+                        item.GetParrent().MergeChunk();
+                        positionsList.Add(item.GetParrent().GetPositionToDraw());
+                    }
+                    else
+                    {
+                        positionsList.Add(item.GetPositionToDraw());
+                    }
+                }
             }
-            else if(item.GetScale() > chunkSize)
+
+            Debug.Log(item.GetPositionToDraw());
+
+            
+            if(item.GetScale() * chunkSize > dist)
             {
+                Debug.Log("divide");
                 item.SubDivide();
+                foreach (var child in item.getChunkTree())
+                {
+                    positionsList.Add(child.GetPositionToDraw());
+                }
             }
-            else if(item.GetGenerate())
+            else
             {
                 positionsList.Add(item.GetPositionToDraw());
             }
+
         }
 
         Vector4[] viewedChunkCoord = positionsList.ToArray();
         if (viewedChunkCoord.Length > 0)
         {
-            drawMesh.UpdateData(positionsList.Count, meshData.GetMesh(), instanceMaterial, viewedChunkCoord);
+            drawMesh.UpdateData(positionsList.Count, viewedChunkCoord);
         }
     }
 

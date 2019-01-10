@@ -24,9 +24,9 @@ public class ChunkFace {
         this.chunkSize = chunkSize;
 
         generated = true;
-
-        bounds = new Bounds(position, Vector2.one * chunkSize);
-        positionToDraw = new Vector4((position.x) * (chunkSize - 1) * scale, position.y, (position.z) * (chunkSize - 1) * scale, scale);
+        
+        bounds = new Bounds(position, new Vector3(1,0,1) * chunkSize * scale);
+        positionToDraw = new Vector4((position.x) , position.y, (position.z) , scale);
     }
 
     public ChunkFace[] getChunkTree()
@@ -49,6 +49,16 @@ public class ChunkFace {
         return positionToDraw;
     }
 
+    public Vector3 GetPosition()
+    {
+        return position;
+    }
+
+    public ChunkFace GetParrent()
+    {
+        return parentChunk;
+    }
+
     public void MergeChunk()
     {
         if (chunkTree == null)
@@ -60,20 +70,18 @@ public class ChunkFace {
         }
 
         generated = true;
+
         chunkTree = null;
     }
 
     public void SubDivide()
     {
-        Vector3 stepLeft = new Vector3(chunkSize * scale / 4, 0, 0);
-        Vector3 stepUp = new Vector3(0, 0, chunkSize * scale / 4);
+        Vector3 stepLeft = new Vector3((chunkSize - 1) * scale / 4, 0, 0);
+        Vector3 stepUp = new Vector3(0, 0, (chunkSize - 1) * scale / 4);
 
         float newScale = scale / 2;
 
         generated = false;
-
-        Debug.Log(position);
-        Debug.Log(position - stepLeft + stepUp);
 
         chunkTree = new ChunkFace[] {
                 new ChunkFace(this, position - stepLeft + stepUp, newScale, chunkSize),

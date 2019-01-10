@@ -14,11 +14,15 @@ public class DrawMesh  {
     ComputeBuffer argsBuffer;
     uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
 
-    public void UpdateData (int instanceCount, Mesh instanceMesh, Material instanceMaterial, Vector4[] positions)
+    public DrawMesh(Mesh instanceMesh, Material instanceMaterial)
     {
         this.instanceMesh = instanceMesh;
-        this.instanceCount = instanceCount; 
         this.instanceMaterial = instanceMaterial;
+    }
+
+    public void UpdateData (int instanceCount, Vector4[] positions)
+    {
+        this.instanceCount = instanceCount; 
         this.positions = positions;
 
         if (argsBuffer != null)

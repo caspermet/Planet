@@ -9,13 +9,17 @@ public class MapGenerator : MonoBehaviour {
     public Material material;
     public Material instanceMaterial;
 
+    public float maxScale;
+
     private Chunk chunk;
 
-    public int chunkSize = 200;
+
+
+    public int chunkSize = 50;
 
     void Start()
     {
-        chunk = new Chunk(512.0f,  chunkSize, instanceMaterial, viewer);
+        chunk = new Chunk(maxScale,  chunkSize, instanceMaterial, viewer);
     }
 
     void Update()

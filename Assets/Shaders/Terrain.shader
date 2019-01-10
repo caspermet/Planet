@@ -74,7 +74,7 @@ Shader "Instanced/Terrain" {
 
 				float4 wolrldPosition = mul(unity_ObjectToWorld, v.vertex);
 		
-				v.vertex.y = tex2Dlod(_MainTex, float4(wolrldPosition.xz / 1000, 0, 0)) * 3 / data.w;
+				v.vertex.y = tex2Dlod(_MainTex, float4(wolrldPosition.xz / 10000 , 0, 0)) * 50 / data.w ;
 			#endif
 			}
 
@@ -90,7 +90,7 @@ Shader "Instanced/Terrain" {
 
 				float4 wolrldPosition = mul(unity_ObjectToWorld, float4(IN.worldPos, 0));
 		
-				fixed4 c = tex2D(_MainTex, wolrldPosition.xz / 1000);
+				fixed4 c = tex2D(_MainTex, wolrldPosition.xz/ 10000);
 
 				float h = (_HeightMax - IN.worldPos.y) / (_HeightMax - _HeightMin);
 				fixed4 tintColor = lerp(_ColorMax.rgba, _ColorMin.rgba, h);
