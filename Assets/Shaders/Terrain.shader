@@ -65,6 +65,7 @@ Shader "Instanced/Terrain" {
 
 			fixed4 _ColorMin;
 			fixed4 _ColorMax;
+
 			float _HeightMin;
 			float _HeightMax;
 
@@ -74,7 +75,7 @@ Shader "Instanced/Terrain" {
 
 				float4 wolrldPosition = mul(unity_ObjectToWorld, v.vertex);
 		
-				v.vertex.y = tex2Dlod(_MainTex, float4(wolrldPosition.xz / 10000 , 0, 0)) * 50 / data.w ;
+				v.vertex.y = tex2Dlod(_MainTex, float4(wolrldPosition.xz / 50000 , 0, 0)) * 500 / data.w ;
 			#endif
 			}
 
@@ -86,11 +87,9 @@ Shader "Instanced/Terrain" {
 			UNITY_INSTANCING_BUFFER_END(Props)
 
 			void surf(Input IN, inout SurfaceOutputStandard o) {
-				// Albedo comes from a texture tinted by color	
-
 				float4 wolrldPosition = mul(unity_ObjectToWorld, float4(IN.worldPos, 0));
-		
-				fixed4 c = tex2D(_MainTex, wolrldPosition.xz/ 10000);
+
+				fixed4 c = tex2D(_MainTex, IN.uv_MainTex / 50000);
 
 				float h = (_HeightMax - IN.worldPos.y) / (_HeightMax - _HeightMin);
 				fixed4 tintColor = lerp(_ColorMax.rgba, _ColorMin.rgba, h);

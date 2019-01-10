@@ -16,7 +16,9 @@ public class ChunkFace {
 
     public bool generated;
 
-    public ChunkFace(ChunkFace parent, Vector3 position, float scale, int chunkSize)
+    private List<Vector4> positionsList = new List<Vector4>();
+
+    public ChunkFace(ChunkFace parent, Vector3 position, float scale, int chunkSize, Vector3 viewerPositon)
     {
         this.parentChunk = parent;
         this.position = position;
@@ -27,6 +29,36 @@ public class ChunkFace {
         
         bounds = new Bounds(position, new Vector3(1,0,1) * chunkSize * scale);
         positionToDraw = new Vector4((position.x) , position.y, (position.z) , scale);
+
+        Update(viewerPositon);
+    }
+
+    public List<Vector4> Update(Vector3 viewerPositon)
+    {
+        var dist = Vector3.Distance(viewerPositon, bounds.ClosestPoint(viewerPositon));
+        
+        if (parentChunk != null)
+        {
+            var distParent = Vector3.Distance(viewerPositon, parentChunk.GetBounds().ClosestPoint(viewerPositon));
+           
+            if (distParent > parentChunk.GetScale() * chunkSize)
+            {
+                parentChunk.MergeChunk();
+                return positionsList;
+            }
+        }
+
+        if (scale * chunkSize > dist)
+        { 
+            SubDivide(viewerPositon);
+        }
+
+        else
+        {
+            positionsList.Add(positionToDraw);
+        }
+    
+        return positionsList;
     }
 
     public ChunkFace[] getChunkTree()
@@ -59,6 +91,11 @@ public class ChunkFace {
         return parentChunk;
     }
 
+    public List<Vector4> GetPositionList()
+    {
+        return positionsList;
+    }
+
     public void MergeChunk()
     {
         if (chunkTree == null)
@@ -69,26 +106,33 @@ public class ChunkFace {
             chunkTree[i].MergeChunk();
         }
 
-        generated = true;
-
         chunkTree = null;
+
+        positionsList.Clear();
+        positionsList.Add(positionToDraw);
     }
 
-    public void SubDivide()
+    public void SubDivide(Vector3 viewerPosition)
     {
-        Vector3 stepLeft = new Vector3((chunkSize - 1) * scale / 4, 0, 0);
-        Vector3 stepUp = new Vector3(0, 0, (chunkSize - 1) * scale / 4);
+        Vector3 stepLeft = new Vector3(chunkSize * scale / 4, 0, 0);
+        Vector3 stepUp = new Vector3(0, 0, chunkSize * scale / 4);
 
         float newScale = scale / 2;
 
         generated = false;
 
         chunkTree = new ChunkFace[] {
-                new ChunkFace(this, position - stepLeft + stepUp, newScale, chunkSize),
-                new ChunkFace(this, position + stepLeft + stepUp, newScale, chunkSize),
-                new ChunkFace(this, position - stepLeft - stepUp, newScale, chunkSize),
-                new ChunkFace(this, position + stepLeft - stepUp, newScale, chunkSize)
-            };
+                new ChunkFace(this, position - stepLeft + stepUp, newScale, chunkSize, viewerPosition),
+                new ChunkFace(this, position + stepLeft + stepUp, newScale, chunkSize, viewerPosition),
+                new ChunkFace(this, position - stepLeft - stepUp, newScale, chunkSize, viewerPosition),
+                new ChunkFace(this, position + stepLeft - stepUp, newScale, chunkSize, viewerPosition)
+        };
+
+        positionsList.Clear();
+        foreach (var chunk in chunkTree)
+        {
+            positionsList.AddRange(chunk.GetPositionList());
+        }
     }
 
     public bool GetGenerate()

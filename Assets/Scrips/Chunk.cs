@@ -7,6 +7,7 @@ public class Chunk {
     const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
 
     private List<Vector4> positionsList = new List<Vector4>();
+    private Vector4[] viewedChunkCoord;
 
     private float scale;
     private int chunkSize = 200;
@@ -29,13 +30,18 @@ public class Chunk {
         this.chunkSize = chunkSize;
         this.viewer = viewer;
 
-        chunkFace = new ChunkFace(null, new Vector3(0, 0, 0), this.scale, chunkSize);
+        viewerPosition = viewer.position;
+
+        chunkFace = new ChunkFace(null, new Vector3(0, 0, 0), this.scale, (chunkSize - 1), viewerPosition);
         meshData = MeshGenerator.GenerateTerrainMesh(chunkSize);
         meshData.CreateMesh();
 
         drawMesh = new DrawMesh(meshData.GetMesh(), instanceMaterial);
+        positionsList = chunkFace.GetPositionList();
+        viewedChunkCoord = positionsList.ToArray();
 
-        UpdateChunkMesh();
+        drawMesh.UpdateData(positionsList.Count, viewedChunkCoord);
+        //UpdateChunkMesh();
     }
 
     public void Update()
@@ -45,9 +51,13 @@ public class Chunk {
         if (viewerPositionOld != viewerPosition)
         {
             viewerPositionOld = viewerPosition;
+
             UpdateChunkMesh();
+            viewedChunkCoord = positionsList.ToArray();
         }
-       // UpdateChunkMesh();
+    
+
+        
         if (positionsList.Count > 0)
         {
             drawMesh.Draw();
@@ -56,52 +66,9 @@ public class Chunk {
 
     private void UpdateChunkMesh()
     {      
-        List<ChunkFace> chunkFacesList = new List<ChunkFace>();
         positionsList.Clear();
 
-        GetActiveChunksFromChunkTree(ref chunkFacesList, chunkFace);
-        
-        foreach (var item in chunkFacesList)
-        {
-
-            var dist = Vector3.Distance(viewer.position, item.GetBounds().ClosestPoint(viewer.position));
-            if (item.GetParrent() != null)
-            {
-                var distParent = Vector3.Distance(viewer.position, item.GetParrent().GetBounds().ClosestPoint(viewer.position));
-
-                if (item.GetParrent() != null && distParent > item.GetParrent().GetScale() * chunkSize)
-                {
-                    Debug.Log("merge");
-                    if (item.GetParrent() != null)
-                    {
-                        item.GetParrent().MergeChunk();
-                        positionsList.Add(item.GetParrent().GetPositionToDraw());
-                    }
-                    else
-                    {
-                        positionsList.Add(item.GetPositionToDraw());
-                    }
-                }
-            }
-
-            Debug.Log(item.GetPositionToDraw());
-
-            
-            if(item.GetScale() * chunkSize > dist)
-            {
-                Debug.Log("divide");
-                item.SubDivide();
-                foreach (var child in item.getChunkTree())
-                {
-                    positionsList.Add(child.GetPositionToDraw());
-                }
-            }
-            else
-            {
-                positionsList.Add(item.GetPositionToDraw());
-            }
-
-        }
+        positionsList = chunkFace.Update(viewerPosition);
 
         Vector4[] viewedChunkCoord = positionsList.ToArray();
         if (viewedChunkCoord.Length > 0)

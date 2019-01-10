@@ -13,6 +13,8 @@ public class MapGenerator : MonoBehaviour {
 
     private Chunk chunk;
 
+    public Gradient gradient;
+
 
 
     public int chunkSize = 50;
