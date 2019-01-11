@@ -56,7 +56,9 @@
      <Compile Include="Assets\Scrips\Chunk.cs" />
      <Compile Include="Assets\Scrips\ChunkFace.cs" />
      <Compile Include="Assets\Scrips\DrawMesh.cs" />
+     <Compile Include="Assets\Scrips\LoadArrayTexture.cs" />
      <Compile Include="Assets\Scrips\MapGenerator.cs" />
+     <Compile Include="Assets\Scrips\maxCamera.cs" />
      <Compile Include="Assets\Scrips\MeshGenerator.cs" />
      <None Include="Assets\Shaders\Terrain.shader" />
      <None Include="Assets\Shaders\InstancedSurfaceShader.shader" />

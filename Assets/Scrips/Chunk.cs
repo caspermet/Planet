@@ -60,6 +60,7 @@ public class Chunk {
         
         if (positionsList.Count > 0)
         {
+           
             drawMesh.Draw();
         }
     }

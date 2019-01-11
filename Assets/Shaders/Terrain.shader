@@ -4,6 +4,10 @@ Shader "Instanced/Terrain" {
 	Properties{
 		_Color("Color", Color) = (1,1,1,1)
 		_MainTex("Texture", 2D) = "white" {}
+		_HeightTex("Texture", 2D) = "white" {}
+		_ColorWater("water Texture", 2D) = "white" {}
+		_Textures("Textures", 2DArray) = "" {}
+
 		_Glossiness("Smoothness", Range(0,1)) = 0.5
 		_Metallic("Metallic", Range(0,1)) = 0.0
 		_Scale("Scale", float) = 1.0
@@ -11,6 +15,7 @@ Shader "Instanced/Terrain" {
 		_HeightMax("Height Max", Float) = 1
 		_ColorMin("Tint Color At Min", Color) = (0,0,0,1)
 		_ColorMax("Tint Color At Max", Color) = (1,1,1,1)
+			
 	}
 		SubShader{
 			Tags { "RenderType" = "Opaque" }
@@ -26,9 +31,14 @@ Shader "Instanced/Terrain" {
 			#pragma target 3.0
 
 			sampler2D _MainTex;
+			sampler2D _HeightTex;
+			sampler2D _ColorWater;
 
+			UNITY_DECLARE_TEX2DARRAY(_Textures);
+				
 			struct Input {
 				float2 uv_MainTex;
+				fixed2 uv_Textures;
 				float3 worldPos;
 			};
 
@@ -51,7 +61,7 @@ Shader "Instanced/Terrain" {
 					unity_ObjectToWorld._11_21_31_41 = float4(data.w, 0, 0, 0);
 					unity_ObjectToWorld._12_22_32_42 = float4(0, data.w, 0, 0);
 					unity_ObjectToWorld._13_23_33_43 = float4(0, 0, data.w, 0);
-					unity_ObjectToWorld._14_24_34_44 = float4(data.xyz, 1);
+					unity_ObjectToWorld._14_24_34_44 = float4(data.x, data.y, data.z, 1);
 					unity_WorldToObject = unity_ObjectToWorld;
 					unity_WorldToObject._14_24_34 *= -1;
 					unity_WorldToObject._11_22_33 = 1.0f / unity_WorldToObject._11_22_33; 
@@ -68,14 +78,19 @@ Shader "Instanced/Terrain" {
 
 			float _HeightMin;
 			float _HeightMax;
+			
 
 			void vert(inout appdata_full v) {
 			#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+
 				float4 data = positionBuffer[unity_InstanceID];
 
-				float4 wolrldPosition = mul(unity_ObjectToWorld, v.vertex);
+				float4 wolrldPosition = mul(unity_ObjectToWorld, v.vertex) / 50000;
+
+				float x = wolrldPosition.x;
+				float z = wolrldPosition.z;
 		
-				v.vertex.y = tex2Dlod(_MainTex, float4(wolrldPosition.xz / 50000 , 0, 0)) * 500 / data.w ;
+				v.vertex.y = (tex2Dlod(_HeightTex, float4(x , z , 0, 0)) * 800 / data.w); // -some;
 			#endif
 			}
 
@@ -87,15 +102,38 @@ Shader "Instanced/Terrain" {
 			UNITY_INSTANCING_BUFFER_END(Props)
 
 			void surf(Input IN, inout SurfaceOutputStandard o) {
-				float4 wolrldPosition = mul(unity_ObjectToWorld, float4(IN.worldPos, 0));
 
-				fixed4 c = tex2D(_MainTex, IN.uv_MainTex / 50000);
+			//	fixed4 c = tex2D(_MainTex, IN.worldPos.xz/100);
 
+				//fixed4 c = UNITY_SAMPLE_TEX2DARRAY(_Textures, float3(IN.uv_Textures, 0));
+
+				
+				//float h = (_HeightMax - IN.worldPos.y) / (_HeightMax - _HeightMin);
 				float h = (_HeightMax - IN.worldPos.y) / (_HeightMax - _HeightMin);
-				fixed4 tintColor = lerp(_ColorMax.rgba, _ColorMin.rgba, h);
 
-				o.Albedo = c.rgb * tintColor.rgb;
-				o.Alpha = c.a * tintColor.a;
+			
+				
+				int index = 0;
+
+				if (h == 1) {
+					index = 0;
+				}
+				else if (h > 0.9) {
+					index = 1;
+				}
+				else if (h > 0.6) {
+					index = 2;
+				}
+				else if (h > 0.3) {
+					index = 3;
+				}
+				else {
+					index = 4;
+				}
+				fixed4 c = UNITY_SAMPLE_TEX2DARRAY(_Textures, float3(IN.uv_Textures, UNITY_ACCESS_INSTANCED_PROP(index_arr, index)));
+				o.Albedo = c.rgb;
+				o.Alpha = 1;
+			
 
 			}
 			ENDCG
