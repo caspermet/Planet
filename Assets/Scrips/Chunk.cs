@@ -44,7 +44,7 @@ public class Chunk {
         //UpdateChunkMesh();
     }
 
-    public void Update()
+    public void Update(Material instanceMaterial)
     {
         viewerPosition = new Vector3(viewer.position.x, viewer.position.y, viewer.position.z);
 
@@ -55,9 +55,7 @@ public class Chunk {
             UpdateChunkMesh();
             viewedChunkCoord = positionsList.ToArray();
         }
-    
-
-        
+         
         if (positionsList.Count > 0)
         {
            

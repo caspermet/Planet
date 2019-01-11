@@ -29,7 +29,7 @@ public class DrawMesh  {
             argsBuffer.Release();
         argsBuffer = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
 
-        UpdateBuffers();
+        UpdateBuffers(instanceMaterial);
     }   
 
     public void Draw()
@@ -37,7 +37,7 @@ public class DrawMesh  {
         Graphics.DrawMeshInstancedIndirect(instanceMesh, subMeshIndex, instanceMaterial, new Bounds(Vector3.zero, new Vector3(100000.0f, 100000.0f, 100000.0f)), argsBuffer);
     }
 
-    public  void UpdateBuffers()
+    public  void UpdateBuffers(Material instanceMaterial)
     {
         // Ensure submesh index is in range
         if (instanceMesh != null)

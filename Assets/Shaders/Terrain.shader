@@ -2,19 +2,14 @@
 
 Shader "Instanced/Terrain" {
 	Properties{
-		_Color("Color", Color) = (1,1,1,1)
-		_MainTex("Texture", 2D) = "white" {}
 		_HeightTex("Texture", 2D) = "white" {}
-		_ColorWater("water Texture", 2D) = "white" {}
+
 		_Textures("Textures", 2DArray) = "" {}
 
-		_Glossiness("Smoothness", Range(0,1)) = 0.5
-		_Metallic("Metallic", Range(0,1)) = 0.0
-		_Scale("Scale", float) = 1.0
+
 		_HeightMin("Height Min", Float) = -1
 		_HeightMax("Height Max", Float) = 1
-		_ColorMin("Tint Color At Min", Color) = (0,0,0,1)
-		_ColorMax("Tint Color At Max", Color) = (1,1,1,1)
+		_textureblend("bluer Texture", Range(0,0.1)) = 1
 			
 	}
 		SubShader{
@@ -30,9 +25,7 @@ Shader "Instanced/Terrain" {
 			// Use shader model 3.0 target, to get nicer looking lighting
 			#pragma target 3.0
 
-			sampler2D _MainTex;
 			sampler2D _HeightTex;
-			sampler2D _ColorWater;
 
 			UNITY_DECLARE_TEX2DARRAY(_Textures);
 				
@@ -68,16 +61,13 @@ Shader "Instanced/Terrain" {
 				#endif
 				}
 
-			half _Glossiness;
-			half _Metallic;
-			fixed4 _Color;
-			float _Scale;
-
-			fixed4 _ColorMin;
-			fixed4 _ColorMax;
+			int _TexturesArrayLength;
+			float _TexturesArray[20];
 
 			float _HeightMin;
 			float _HeightMax;
+
+			float _textureblend;
 			
 
 			void vert(inout appdata_full v) {
@@ -90,7 +80,7 @@ Shader "Instanced/Terrain" {
 				float x = wolrldPosition.x;
 				float z = wolrldPosition.z;
 		
-				v.vertex.y = (tex2Dlod(_HeightTex, float4(x , z , 0, 0)) * 800 / data.w); // -some;
+				v.vertex.y = (tex2Dlod(_HeightTex, float4(x , z , 0, 0)) * 500 / data.w); // -some;
 			#endif
 			}
 
@@ -103,34 +93,46 @@ Shader "Instanced/Terrain" {
 
 			void surf(Input IN, inout SurfaceOutputStandard o) {
 
-			//	fixed4 c = tex2D(_MainTex, IN.worldPos.xz/100);
-
-				//fixed4 c = UNITY_SAMPLE_TEX2DARRAY(_Textures, float3(IN.uv_Textures, 0));
-
-				
-				//float h = (_HeightMax - IN.worldPos.y) / (_HeightMax - _HeightMin);
 				float h = (_HeightMax - IN.worldPos.y) / (_HeightMax - _HeightMin);
 
-			
-				
 				int index = 0;
+			
+				for (int i = 0; i < _TexturesArrayLength; i++) {
+					if (h >= _TexturesArray[i]) {
+						index = i;
+						break;
+					}
+				}
 
-				if (h == 1) {
-					index = 0;
-				}
-				else if (h > 0.9) {
-					index = 1;
-				}
-				else if (h > 0.6) {
-					index = 2;
-				}
-				else if (h > 0.3) {
-					index = 3;
-				}
-				else {
-					index = 4;
-				}
+				
+			
+
 				fixed4 c = UNITY_SAMPLE_TEX2DARRAY(_Textures, float3(IN.uv_Textures, UNITY_ACCESS_INSTANCED_PROP(index_arr, index)));
+
+
+				/***********************				
+					Rozmazí krajních bodů textůr
+				********************/
+
+				if (((h - _textureblend) < _TexturesArray[index]) && index > 0){
+					float 	g = (_textureblend - h + _TexturesArray[index]) / (_textureblend * 2 + 0.001);
+					fixed4 d = UNITY_SAMPLE_TEX2DARRAY(_Textures, float3(IN.uv_Textures, UNITY_ACCESS_INSTANCED_PROP(index_arr, index + 1)));
+					c = lerp(c, d, g);
+				}
+				else if ((index > 0) && ((h + _textureblend) > _TexturesArray[index - 1])) {
+					float g;
+					if (index == 1) {
+						g = (_textureblend + h - _TexturesArray[index - 1]) / (_textureblend  + 0.001);
+					}
+					else {
+						g = (_textureblend + h - _TexturesArray[index - 1]) / (_textureblend * 2 + 0.001);
+					}
+				
+					fixed4 d = UNITY_SAMPLE_TEX2DARRAY(_Textures, float3(IN.uv_Textures, UNITY_ACCESS_INSTANCED_PROP(index_arr, index - 1))); 
+					c = lerp(c, d, g);
+				}
+
+
 				o.Albedo = c.rgb;
 				o.Alpha = 1;
 			

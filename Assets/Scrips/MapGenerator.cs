@@ -16,6 +16,7 @@ public class MapGenerator : MonoBehaviour {
     public Texture2D[] planetTexture;
     [Range(0, 1)]
     public float[] planetTextureRange;
+    private float[] planetTextureRangeOld;
 
     void Start()
     {
@@ -29,7 +30,10 @@ public class MapGenerator : MonoBehaviour {
 
     void Update()
     {
-        chunk.Update();
+        instanceMaterial.SetInt("_TexturesArrayLength", planetTextureRange.Length);
+        instanceMaterial.SetFloatArray("_TexturesArray", planetTextureRange);
+
+        chunk.Update(instanceMaterial);
     }
 
     void OnDisable()
