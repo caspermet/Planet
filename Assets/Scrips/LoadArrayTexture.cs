@@ -4,9 +4,7 @@ using UnityEngine;
 
 public static class LoadArrayTexture {
 
-   
-    static int textureWidth = 256;
-    static int textureHeight = 256;
+  
 
     public static Texture2DArray DoTexture(Texture2D[] ordinaryTextures)
     {

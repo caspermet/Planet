@@ -6,9 +6,6 @@ Shader "Instanced/Terrain" {
 
 		_Textures("Textures", 2DArray) = "" {}
 
-
-		_HeightMin("Height Min", Float) = -1
-		_HeightMax("Height Max", Float) = 1
 		_textureblend("bluer Texture", Range(0,0.1)) = 1
 			
 	}
@@ -17,6 +14,8 @@ Shader "Instanced/Terrain" {
 			LOD 200
 
 			CGPROGRAM
+// Upgrade NOTE: excluded shader from DX11, OpenGL ES 2.0 because it uses unsized arrays
+#pragma exclude_renderers d3d11 gles
 			// Physically based Standard lighting model, and enable shadows on all light types
 			#pragma surface surf Standard addshadow fullforwardshadows vertex:vert
 			#pragma multi_compile_instancing
@@ -70,10 +69,6 @@ Shader "Instanced/Terrain" {
 			int _TexturesArrayLength;
 			float _TexturesArray[20];
 
-
-			float _HeightMin;
-			float _HeightMax;
-
 			float _textureblend;
 
 			void vert(inout appdata_full v) {
@@ -85,10 +80,8 @@ Shader "Instanced/Terrain" {
 
 				float x = wolrldPosition.x;
 				float z = wolrldPosition.z;
-
-				//float step = sqrt(_PlanetInfo.x * _PlanetInfo.x + x * x + z * z) - _PlanetInfo.x;
 		
-				v.vertex.y = (tex2Dlod(_HeightTex, float4(x , z , 0, 0) - 1) * _PlanetInfo.y  + _PlanetInfo.x) / data.w ;
+				v.vertex.y = (tex2Dlod(_HeightTex, float4(x, z, 0, 0) - 1) * _PlanetInfo.y + _PlanetInfo.x) / data.w;
 			#endif
 			}
 

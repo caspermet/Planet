@@ -9,6 +9,7 @@ public class DrawMesh  {
     Material instanceMaterial;
     int subMeshIndex = 0;
     Vector4[] positions;
+    Vector3[] directions;
 
     ComputeBuffer positionBuffer;
     ComputeBuffer argsBuffer;
@@ -20,10 +21,11 @@ public class DrawMesh  {
         this.instanceMaterial = instanceMaterial;
     }
 
-    public void UpdateData (int instanceCount, Vector4[] positions)
+    public void UpdateData (int instanceCount, Vector4[] positions, Vector3[] directions)
     {
         this.instanceCount = instanceCount; 
         this.positions = positions;
+        this.directions = directions;
 
         if (argsBuffer != null)
             argsBuffer.Release();
@@ -34,7 +36,7 @@ public class DrawMesh  {
 
     public void Draw()
     {
-        Graphics.DrawMeshInstancedIndirect(instanceMesh, subMeshIndex, instanceMaterial, new Bounds(Vector3.zero, new Vector3(100000.0f, 100000.0f, 100000.0f)), argsBuffer, 0, null, UnityEngine.Rendering.ShadowCastingMode.On);
+        Graphics.DrawMeshInstancedIndirect(instanceMesh, subMeshIndex, instanceMaterial, new Bounds(Vector3.zero, new Vector3(100000.0f, 100000.0f, 100000.0f)), argsBuffer);
     }
 
     public  void UpdateBuffers(Material instanceMaterial)
@@ -50,6 +52,13 @@ public class DrawMesh  {
 
         positionBuffer.SetData(positions);
         instanceMaterial.SetBuffer("positionBuffer", positionBuffer);
+
+        /*if (positionBuffer != null)
+            positionBuffer.Release();
+        positionBuffer = new ComputeBuffer(instanceCount, 16);*/
+
+        /*positionBuffer.SetData(directions);
+        instanceMaterial.SetBuffer("directionsBuffer", positionBuffer);*/
 
         // Indirect args
         if (instanceMesh != null)
@@ -76,6 +85,5 @@ public class DrawMesh  {
         if (argsBuffer != null)
             argsBuffer.Release();
         argsBuffer = null;
-
     }
 }

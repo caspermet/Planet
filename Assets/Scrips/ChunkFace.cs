@@ -9,26 +9,29 @@ public class ChunkFace {
     private int chunkSize;
     private float scale;
 
+    private Vector3 direction;
     private Vector3 position;
     private Vector4 positionToDraw;
+    private List<Vector4> positionsList = new List<Vector4>();
+    private List<Vector3> directionList = new List<Vector3>();
 
     private Bounds bounds;
 
-    public bool generated;
+    private Vector4[] chunkData;
 
-    private List<Vector4> positionsList = new List<Vector4>();
 
-    public ChunkFace(ChunkFace parent, Vector3 position, float scale, int chunkSize, Vector3 viewerPositon)
+    public ChunkFace(ChunkFace parent, Vector3 position, float scale, int chunkSize, Vector3 viewerPositon, Vector3 direction )
     {
         this.parentChunk = parent;
         this.position = position;
         this.scale = scale;
         this.chunkSize = chunkSize;
+        this.direction = direction;
+
+
+
 
        // this.position.y += radius;
-
-        generated = true;
-        
         bounds = new Bounds(position, new Vector3(1,0,1) * chunkSize * scale);
         positionToDraw = new Vector4((position.x) , 0, (position.z) , scale);
        // this.position.y += radius;
@@ -59,6 +62,7 @@ public class ChunkFace {
         else
         {
             positionsList.Add(positionToDraw);
+            directionList.Add(direction);
         }
     
         return positionsList;
@@ -99,6 +103,11 @@ public class ChunkFace {
         return positionsList;
     }
 
+    public List<Vector3> GetDirectionList()
+    {
+        return directionList;
+    }
+
     public void MergeChunk()
     {
         if (chunkTree == null)
@@ -113,6 +122,8 @@ public class ChunkFace {
 
         positionsList.Clear();
         positionsList.Add(positionToDraw);
+        directionList.Clear();
+        directionList.Add(direction);
     }
 
     public void SubDivide(Vector3 viewerPosition)
@@ -122,29 +133,20 @@ public class ChunkFace {
 
         float newScale = scale / 2;
 
-        generated = false;
-
         chunkTree = new ChunkFace[] {
-                new ChunkFace(this, position - stepLeft + stepUp, newScale, chunkSize, viewerPosition),
-                new ChunkFace(this, position + stepLeft + stepUp, newScale, chunkSize, viewerPosition),
-                new ChunkFace(this, position - stepLeft - stepUp, newScale, chunkSize, viewerPosition),
-                new ChunkFace(this, position + stepLeft - stepUp, newScale, chunkSize, viewerPosition)
+                new ChunkFace(this, position - stepLeft + stepUp, newScale, chunkSize, viewerPosition, direction),
+                new ChunkFace(this, position + stepLeft + stepUp, newScale, chunkSize, viewerPosition, direction),
+                new ChunkFace(this, position - stepLeft - stepUp, newScale, chunkSize, viewerPosition, direction),
+                new ChunkFace(this, position + stepLeft - stepUp, newScale, chunkSize, viewerPosition, direction)
         };
 
         positionsList.Clear();
+        directionList.Clear();
+       
         foreach (var chunk in chunkTree)
         {
             positionsList.AddRange(chunk.GetPositionList());
+            directionList.AddRange(chunk.GetDirectionList());
         }
-    }
-
-    public bool GetGenerate()
-    {
-        return generated;
-    }
-
-    public void SetGenerated(bool isGenerate)
-    {
-        generated = isGenerate;
     }
 }
