@@ -25,10 +25,13 @@ public class ChunkFace {
         this.scale = scale;
         this.chunkSize = chunkSize;
 
+       // this.position.y += radius;
+
         generated = true;
         
         bounds = new Bounds(position, new Vector3(1,0,1) * chunkSize * scale);
-        positionToDraw = new Vector4((position.x) , position.y, (position.z) , scale);
+        positionToDraw = new Vector4((position.x) , 0, (position.z) , scale);
+       // this.position.y += radius;
 
         Update(viewerPositon);
     }

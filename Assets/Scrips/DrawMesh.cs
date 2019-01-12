@@ -34,7 +34,7 @@ public class DrawMesh  {
 
     public void Draw()
     {
-        Graphics.DrawMeshInstancedIndirect(instanceMesh, subMeshIndex, instanceMaterial, new Bounds(Vector3.zero, new Vector3(100000.0f, 100000.0f, 100000.0f)), argsBuffer);
+        Graphics.DrawMeshInstancedIndirect(instanceMesh, subMeshIndex, instanceMaterial, new Bounds(Vector3.zero, new Vector3(100000.0f, 100000.0f, 100000.0f)), argsBuffer, 0, null, UnityEngine.Rendering.ShadowCastingMode.On);
     }
 
     public  void UpdateBuffers(Material instanceMaterial)

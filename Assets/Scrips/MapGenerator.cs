@@ -13,6 +13,10 @@ public class MapGenerator : MonoBehaviour {
 
     public int chunkSize = 50;
 
+    public float maxTerrainHeight;
+
+    private Vector3 planetInfo;
+
     public Texture2D[] planetTexture;
     [Range(0, 1)]
     public float[] planetTextureRange;
@@ -20,10 +24,15 @@ public class MapGenerator : MonoBehaviour {
 
     void Start()
     {
+
+        planetInfo.x = (chunkSize - 1) * maxScale / 2;
+        planetInfo.y = maxTerrainHeight;
+
         instanceMaterial.SetTexture("_Textures", LoadArrayTexture.DoTexture(planetTexture));
 
         instanceMaterial.SetInt("_TexturesArrayLength", planetTextureRange.Length);
         instanceMaterial.SetFloatArray("_TexturesArray", planetTextureRange);
+        instanceMaterial.SetVector("_PlanetInfo", planetInfo);
 
         chunk = new Chunk(maxScale,  chunkSize, instanceMaterial, viewer);
     }

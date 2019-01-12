@@ -12,6 +12,8 @@ public class Chunk {
     private float scale;
     private int chunkSize = 200;
 
+    private float planetRadius;
+
     private Material material;
 
     private DrawMesh drawMesh;
@@ -30,9 +32,11 @@ public class Chunk {
         this.chunkSize = chunkSize;
         this.viewer = viewer;
 
+        planetRadius = (chunkSize - 1) * scale / 2;
+
         viewerPosition = viewer.position;
 
-        chunkFace = new ChunkFace(null, new Vector3(0, 0, 0), this.scale, (chunkSize - 1), viewerPosition);
+        chunkFace = new ChunkFace(null, new Vector3(0, planetRadius, 0), this.scale, (chunkSize - 1), viewerPosition);
         meshData = MeshGenerator.GenerateTerrainMesh(chunkSize);
         meshData.CreateMesh();
 

@@ -20,7 +20,7 @@ public static class LoadArrayTexture {
         texture2DArray.wrapMode = TextureWrapMode.Repeat;
         // Loop through ordinary textures and copy pixels to the
         // Texture2DArray
-        Debug.Log(ordinaryTextures.Length);
+      
         for (int i = 0; i < ordinaryTextures.Length; i++)
         {
             texture2DArray.SetPixels(ordinaryTextures[i].GetPixels(0),

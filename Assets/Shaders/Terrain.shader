@@ -26,6 +26,12 @@ Shader "Instanced/Terrain" {
 			#pragma target 3.0
 
 			sampler2D _HeightTex;
+		/*****************************************************************
+			Planet Info
+			x -> planet Radius -> (chunkSize - 1) * MaxScale
+			y -> Max terrain height
+			********************************************************************/
+			float3 _PlanetInfo;
 
 			UNITY_DECLARE_TEX2DARRAY(_Textures);
 				
@@ -64,23 +70,25 @@ Shader "Instanced/Terrain" {
 			int _TexturesArrayLength;
 			float _TexturesArray[20];
 
+
 			float _HeightMin;
 			float _HeightMax;
 
 			float _textureblend;
-			
 
 			void vert(inout appdata_full v) {
 			#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
 
 				float4 data = positionBuffer[unity_InstanceID];
 
-				float4 wolrldPosition = mul(unity_ObjectToWorld, v.vertex) / 50000;
+				float4 wolrldPosition = mul(unity_ObjectToWorld, v.vertex) / 5000;
 
 				float x = wolrldPosition.x;
 				float z = wolrldPosition.z;
+
+				//float step = sqrt(_PlanetInfo.x * _PlanetInfo.x + x * x + z * z) - _PlanetInfo.x;
 		
-				v.vertex.y = (tex2Dlod(_HeightTex, float4(x , z , 0, 0)) * 500 / data.w); // -some;
+				v.vertex.y = (tex2Dlod(_HeightTex, float4(x , z , 0, 0) - 1) * _PlanetInfo.y  + _PlanetInfo.x) / data.w ;
 			#endif
 			}
 
@@ -93,7 +101,7 @@ Shader "Instanced/Terrain" {
 
 			void surf(Input IN, inout SurfaceOutputStandard o) {
 
-				float h = (_HeightMax - IN.worldPos.y) / (_HeightMax - _HeightMin);
+				float h = (_PlanetInfo.y + _PlanetInfo.x - IN.worldPos.y) / (_PlanetInfo.y );
 
 				int index = 0;
 			
