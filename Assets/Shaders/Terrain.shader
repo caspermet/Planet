@@ -1,4 +1,6 @@
-﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
 
 Shader "Instanced/Terrain" {
 	Properties{
@@ -10,10 +12,12 @@ Shader "Instanced/Terrain" {
 		_HeightMin("Height Min", Float) = -1
 		_HeightMax("Height Max", Float) = 1
 		_textureblend("bluer Texture", Range(0,0.1)) = 1
+			_Angle("Angle", float) = 1
 
 	}
 		SubShader{
-			Tags { "RenderType" = "Opaque" }
+
+			Tags { "RenderType" = "Opaque"  }
 			LOD 200
 
 			CGPROGRAM
@@ -21,6 +25,8 @@ Shader "Instanced/Terrain" {
 			#pragma surface surf Standard addshadow fullforwardshadows vertex:vert
 			#pragma multi_compile_instancing
 			#pragma instancing_options procedural:setup
+			#include "UnityCG.cginc"
+			#include "Lighting.cginc"
 
 			// Use shader model 3.0 target, to get nicer looking lighting
 			#pragma target 3.0
@@ -69,27 +75,29 @@ Shader "Instanced/Terrain" {
 
 			int _TexturesArrayLength;
 			float _TexturesArray[20];
-
+			uniform float _Angle;
 
 			float _HeightMin;
 			float _HeightMax;
 
 			float _textureblend;
 
-			float3x3 YRotationMatrix(float degrees)
+			float3x3 RotateAroundYInDegrees(float degrees)
 			{
 				float alpha = degrees * UNITY_PI / 180.0;
-				float sina, cosa;
-				sincos(alpha, sina, cosa);
-
+				float s = sin(alpha);
+				float c = cos(alpha);
+				//But how can I insert the pivot???
 				return float3x3(
-					cosa, sina, 0,
-					-sina, cosa, 0,
-					0, 0, 1);
+					c, 0, -s,
+					0, 1, 0,
+					s, 0, c);
+			
 			}
 
 			void vert(inout appdata_full v) {
 			#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
+
 
 				float4 data = positionBuffer[unity_InstanceID];
 
@@ -98,11 +106,15 @@ Shader "Instanced/Terrain" {
 				float x = wolrldPosition.x;
 				float z = wolrldPosition.z;
 
-				//float step = sqrt(_PlanetInfo.x * _PlanetInfo.x + x * x + z * z) - _PlanetInfo.x;
+				float4 pos = v.vertex;
+			
 
+				v.vertex.xyz = mul(RotateAroundYInDegrees(_Angle), pos.xyz);
 				v.vertex.y = (tex2Dlod(_HeightTex, float4(x , z , 0, 0) - 1) * _PlanetInfo.y + _PlanetInfo.x) / data.w;
-			#endif
-			}
+				
+				#endif
+				}
+
 
 			// Add instancing support for this shader. You need to check 'Enable Instancing' on materials that use the shader.
 			// See https://docs.unity3d.com/Manual/GPUInstancing.html for more information about instancing.
@@ -124,7 +136,7 @@ Shader "Instanced/Terrain" {
 					}
 				}
 
-				fixed4 c = UNITY_SAMPLE_TEX2DARRAY(_Textures, float3(IN.uv_Textures, UNITY_ACCESS_INSTANCED_PROP(index_arr, index)));
+				fixed4 c = UNITY_SAMPLE_TEX2DARRAY(_Textures, float3(IN.uv_Textures, UNITY_ACCESS_INSTANCED_PROP( index_arr, index)));
 
 
 				/***********************
