@@ -2,8 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class DrawMesh
-{
+public class DrawMesh  {
 
     int instanceCount = 100000;
     Mesh instanceMesh;
@@ -23,10 +22,10 @@ public class DrawMesh
         this.instanceMaterial = instanceMaterial;
     }
 
-    public void UpdateData(int instanceCount, Vector4[] positions, Vector4[] directions)
+    public void UpdateData (int instanceCount, Vector4[] positions, Vector4[] directions)
     {
 
-        this.instanceCount = instanceCount;
+        this.instanceCount = instanceCount; 
         this.positions = positions;
         this.directions = directions;
 
@@ -36,14 +35,14 @@ public class DrawMesh
 
 
         UpdateBuffers(instanceMaterial);
-    }
+    }   
 
     public void Draw()
     {
         Graphics.DrawMeshInstancedIndirect(instanceMesh, subMeshIndex, instanceMaterial, new Bounds(Vector3.zero, new Vector3(100000.0f, 100000.0f, 100000.0f)), argsBuffer);
     }
 
-    public void UpdateBuffers(Material instanceMaterial)
+    public  void UpdateBuffers(Material instanceMaterial)
     {
         // Ensure submesh index is in range
         if (instanceMesh != null)
@@ -52,18 +51,18 @@ public class DrawMesh
         // Positions
         if (positionBuffer != null)
             positionBuffer.Release();
-
+      
         positionBuffer = new ComputeBuffer(instanceCount, 16);
 
         positionBuffer.SetData(positions);
         instanceMaterial.SetBuffer("positionBuffer", positionBuffer);
 
-    /*    if (directionBuffer != null)
+        if (directionBuffer != null)
             directionBuffer.Release();
         directionBuffer = new ComputeBuffer(instanceCount, 16);
 
         directionBuffer.SetData(directions);
-        instanceMaterial.SetBuffer("directionsBuffer", directionBuffer);*/
+        instanceMaterial.SetBuffer("directionsBuffer", directionBuffer);
 
         // Indirect args
         if (instanceMesh != null)

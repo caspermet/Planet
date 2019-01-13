@@ -43,8 +43,18 @@ public class Chunk
         planetRadius = (chunkSize - 1) * scale / 2;
 
         viewerPosition = viewer.position;
+       // chunkFace = new ChunkFace[6];
 
-        chunkFace = new ChunkFace(null, new Vector3(0, planetRadius, 0), this.scale, (chunkSize - 1), viewerPosition, directions[0]);
+        chunkFace = new ChunkFace(null, new Vector3(-planetRadius, 0, 0), this.scale, (chunkSize - 1), viewerPosition, directions[0]);
+/*
+        chunkFace[0] = new ChunkFace(null, new Vector3(0, 0, -planetRadius), this.scale, (chunkSize - 1), viewerPosition, directions[0]);
+        chunkFace[1] = new ChunkFace(null, new Vector3(0, 0, planetRadius), this.scale, (chunkSize - 1), viewerPosition, directions[1]);
+        chunkFace[2] = new ChunkFace(null, new Vector3(-planetRadius, 0, 0), this.scale, (chunkSize - 1), viewerPosition, directions[2]);
+        chunkFace[3] = new ChunkFace(null, new Vector3(planetRadius, 0, 0), this.scale, (chunkSize - 1), viewerPosition, directions[3]);
+        chunkFace[4] = new ChunkFace(null, new Vector3(0, planetRadius, 0), this.scale, (chunkSize - 1), viewerPosition, directions[4]);
+        chunkFace[5] = new ChunkFace(null, new Vector3(0, -planetRadius, 0), this.scale, (chunkSize - 1), viewerPosition, directions[5]);*/
+
+
         meshData = MeshGenerator.GenerateTerrainMesh(chunkSize);
         meshData.CreateMesh();
 

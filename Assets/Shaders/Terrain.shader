@@ -48,8 +48,8 @@ Shader "Instanced/Terrain" {
 			};
 
 			#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
-				StructuredBuffer<float4> positionBuffer;
-				
+			StructuredBuffer<float4> positionBuffer;
+			StructuredBuffer<float4> directionsBuffer;		
 			#endif
 
 				void rotate2D(inout float2 v, float r)
@@ -123,7 +123,7 @@ Shader "Instanced/Terrain" {
 
 			void vert(inout appdata_full v) {
 			#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
-
+				float4 transform = directionsBuffer[unity_InstanceID];
 
 				float4 data = positionBuffer[unity_InstanceID];
 
@@ -133,12 +133,15 @@ Shader "Instanced/Terrain" {
 				float z = wolrldPosition.z;
 
 				float4 pos = v.vertex;
-			
+				
+				if (transform.x != 0) {
+					v.vertex.xyz = mul(RotateAroundZInDegrees(transform.x * 90), pos.xyz);
+				}
 
-				//v.vertex.xyz = mul(RotateAroundXInDegrees(_Angle), pos.xyz);
+				
 
 
-				v.vertex.y = (tex2Dlod(_HeightTex, float4(x , z , 0, 0) - 1) * _PlanetInfo.y + _PlanetInfo.x) / data.w;
+				//v.vertex.y = (tex2Dlod(_HeightTex, float4(x , z , 0, 0) - 1) * _PlanetInfo.y + _PlanetInfo.x) / data.w;
 				
 				#endif
 				}
