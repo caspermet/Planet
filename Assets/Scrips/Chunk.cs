@@ -26,42 +26,50 @@ public class Chunk
     private static Vector3 viewerPositionOld;
     private Transform viewer;
 
-    private ChunkFace chunkFace;
+    private ChunkFace[] chunkFace;
 
     private MeshData meshData;
 
     private Vector3[] directions;
+    private Vector3[] directionsY;
+    int test = 6;
 
     public Chunk(float scale, int chunkSize, Material instanceMaterial, Transform viewer)
     {
-        directions = new Vector3[] { new Vector3(-1, 0, 0), new Vector3(1, 0, 0), new Vector3(0, 0, 1), new Vector3(0, 0, -1), new Vector3(0, 0, 1), new Vector3(0, 0, -1) };
+        directions = new Vector3[] { new Vector3(-1, 0, 0), new Vector3(1, 0, 0), new Vector3(0, 1, 0), new Vector3(0, -1, 0), new Vector3(0, 0, 1), new Vector3(0, 0, -1) };
+        directionsY = new Vector3[] { new Vector3(0, 1, 0), new Vector3(0, 1, 0), new Vector3(0, 0, 1), new Vector3(0, 0, 1), new Vector3(1, 0, 0), new Vector3(1, 0, 0) };
 
+        Vector3 axisA = new Vector3(directions[0].y, directions[0].z, directions[0].x);
+        Vector3 axisB = Vector3.Cross(directions[0], axisA);
+
+       
         this.scale = scale;
         this.chunkSize = chunkSize;
         this.viewer = viewer;
 
-        planetRadius = (chunkSize - 1) * scale / 2;
+        planetRadius = (chunkSize - 1) * scale / 2; 
 
         viewerPosition = viewer.position;
-       // chunkFace = new ChunkFace[6];
+        chunkFace = new ChunkFace[6];
 
-        chunkFace = new ChunkFace(null, new Vector3(-planetRadius, 0, 0), this.scale, (chunkSize - 1), viewerPosition, directions[0]);
-/*
-        chunkFace[0] = new ChunkFace(null, new Vector3(0, 0, -planetRadius), this.scale, (chunkSize - 1), viewerPosition, directions[0]);
-        chunkFace[1] = new ChunkFace(null, new Vector3(0, 0, planetRadius), this.scale, (chunkSize - 1), viewerPosition, directions[1]);
-        chunkFace[2] = new ChunkFace(null, new Vector3(-planetRadius, 0, 0), this.scale, (chunkSize - 1), viewerPosition, directions[2]);
-        chunkFace[3] = new ChunkFace(null, new Vector3(planetRadius, 0, 0), this.scale, (chunkSize - 1), viewerPosition, directions[3]);
-        chunkFace[4] = new ChunkFace(null, new Vector3(0, planetRadius, 0), this.scale, (chunkSize - 1), viewerPosition, directions[4]);
-        chunkFace[5] = new ChunkFace(null, new Vector3(0, -planetRadius, 0), this.scale, (chunkSize - 1), viewerPosition, directions[5]);*/
+        chunkFace[0] = new ChunkFace(null, new Vector3(0, 0, planetRadius), this.scale, (chunkSize - 1), viewerPosition, directions[0], directionsY[0]);
+        chunkFace[1] = new ChunkFace(null, new Vector3(0, 0, -planetRadius), this.scale, (chunkSize - 1), viewerPosition, directions[1], directionsY[1]);
+        chunkFace[2] = new ChunkFace(null, new Vector3(planetRadius, 0, 0), this.scale, (chunkSize - 1), viewerPosition, directions[2], directionsY[2]);
+        chunkFace[3] = new ChunkFace(null, new Vector3(-planetRadius, 0, 0), this.scale, (chunkSize - 1), viewerPosition, directions[3], directionsY[3]);
+        chunkFace[4] = new ChunkFace(null, new Vector3(0, planetRadius, 0), this.scale, (chunkSize - 1), viewerPosition, directions[4], directionsY[4]);
+        chunkFace[5] = new ChunkFace(null, new Vector3(0, -planetRadius, 0), this.scale, (chunkSize - 1), viewerPosition, directions[5], directionsY[5]);
 
 
         meshData = MeshGenerator.GenerateTerrainMesh(chunkSize);
         meshData.CreateMesh();
 
         drawMesh = new DrawMesh(meshData.GetMesh(), instanceMaterial);
-        
-        positionsList = chunkFace.GetPositionList();
-        directionList = chunkFace.GetDirectionList();
+
+        for (int i = 0; i < test; i++)
+        {
+            positionsList.AddRange(chunkFace[i].GetPositionList());
+            directionList.AddRange(chunkFace[i].GetDirectionList());
+        }
 
         viewedChunkCoord = positionsList.ToArray();
         directionArray = directionList.ToArray();
@@ -96,15 +104,19 @@ public class Chunk
         positionsList.Clear();
         directionList.Clear();
 
-        positionsList = chunkFace.Update(viewerPosition);
-        directionList = chunkFace.GetDirectionList();
+        for (int i = 0; i < test; i++)
+        {
+            positionsList.AddRange(chunkFace[i].Update(viewerPosition));
+            directionList.AddRange(chunkFace[i].GetDirectionList());
+           
+        }
 
         viewedChunkCoord = positionsList.ToArray();
         directionArray = directionList.ToArray();
-        Debug.Log(positionsList.Count);
+
         if (viewedChunkCoord.Length > 0)
         {
-            Debug.Log("console");
+
             drawMesh.UpdateData(positionsList.Count, viewedChunkCoord, directionArray);
         }
     }

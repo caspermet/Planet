@@ -52,13 +52,6 @@ Shader "Instanced/Terrain" {
 			StructuredBuffer<float4> directionsBuffer;		
 			#endif
 
-				void rotate2D(inout float2 v, float r)
-				{
-					float s, c;
-					sincos(r, s, c);
-					v = float2(v.x * c - v.y * s, v.x * s + v.y * c);
-				}
-
 				void setup()
 				{
 				#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
@@ -135,10 +128,17 @@ Shader "Instanced/Terrain" {
 				float4 pos = v.vertex;
 				
 				if (transform.x != 0) {
-					v.vertex.xyz = mul(RotateAroundZInDegrees(transform.x * 90), pos.xyz);
+					v.vertex.xyz = mul(RotateAroundXInDegrees(transform.x * 90), pos.xyz);
+				}
+				else if (transform.y != 0) {
+					v.vertex.xyz = mul(RotateAroundZInDegrees(transform.y * 90), pos.xyz);	
+				}
+				else if(transform.z == -1){
+					v.vertex.xyz = mul(RotateAroundZInDegrees(transform.z * 180), pos.xyz);
 				}
 
 				
+				//v.vertex.xyz = normalize(UnityWorldSpaceViewDir(v.vertex.xyz);
 
 
 				//v.vertex.y = (tex2Dlod(_HeightTex, float4(x , z , 0, 0) - 1) * _PlanetInfo.y + _PlanetInfo.x) / data.w;

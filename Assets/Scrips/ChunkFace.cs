@@ -21,8 +21,9 @@ public class ChunkFace
     private List<Vector4> directionList = new List<Vector4>();
 
     private Vector3 directionX;
+    private Vector3 directionY;
 
-    public ChunkFace(ChunkFace parent, Vector3 position, float scale, int chunkSize, Vector3 viewerPositon, Vector3 directionX)
+    public ChunkFace(ChunkFace parent, Vector3 position, float scale, int chunkSize, Vector3 viewerPositon, Vector3 directionX, Vector3 directionY)
     {
         this.parentChunk = parent;
         this.position = position;
@@ -30,12 +31,13 @@ public class ChunkFace
         this.chunkSize = chunkSize;
 
         this.directionX = directionX;
+        this.directionY = directionY;
         // this.position.y += radius;
 
         generated = true;
 
         bounds = new Bounds(position, new Vector3(1, 0, 1) * chunkSize * scale);
-        positionToDraw = new Vector4((position.x), 0, (position.z), scale);
+        positionToDraw = new Vector4((position.x), (position.y), (position.z), scale);
         // this.position.y += radius;
 
         Update(viewerPositon);
@@ -44,7 +46,7 @@ public class ChunkFace
     public List<Vector4> Update(Vector3 viewerPositon)
     {
         var dist = Vector3.Distance(viewerPositon, bounds.ClosestPoint(viewerPositon));
-
+      
         if (parentChunk != null)
         {
             var distParent = Vector3.Distance(viewerPositon, parentChunk.GetBounds().ClosestPoint(viewerPositon));
@@ -132,22 +134,29 @@ public class ChunkFace
     }
 
     public void SubDivide(Vector3 viewerPosition)
-    {
+    {/*
+        Vector3 newPosition = 
         Vector3 stepLeft = new Vector3(chunkSize * scale / 4, 0, 0);
         Vector3 stepUp = new Vector3(0, 0, chunkSize * scale / 4);
 
-        float newScale = scale / 2;
+        float newScale = scale / 2;*/
 
-        generated = false;
+        float newScale = scale * 0.5f;
+
+        Vector3 left = (directionX * scale * chunkSize / 4);
+        Vector3 forward = (directionY * scale * chunkSize / 4);
+        
+
 
         chunkTree = new ChunkFace[] {
-                new ChunkFace(this, position - stepLeft + stepUp, newScale, chunkSize, viewerPosition, directionX),
-                new ChunkFace(this, position + stepLeft + stepUp, newScale, chunkSize, viewerPosition, directionX),
-                new ChunkFace(this, position - stepLeft - stepUp, newScale, chunkSize, viewerPosition, directionX),
-                new ChunkFace(this, position + stepLeft - stepUp, newScale, chunkSize, viewerPosition, directionX)
+                new ChunkFace(this, position - left + forward,  newScale, chunkSize, viewerPosition, directionX, directionY),
+                new ChunkFace(this, position + left + forward,  newScale, chunkSize, viewerPosition, directionX, directionY),
+                new ChunkFace(this, position - left - forward,  newScale, chunkSize, viewerPosition, directionX, directionY),
+                new ChunkFace(this, position + left - forward,  newScale, chunkSize, viewerPosition, directionX, directionY)
         };
 
         positionsList.Clear();
+        directionList.Clear();
         foreach (var chunk in chunkTree)
         {
             positionsList.AddRange(chunk.GetPositionList());
