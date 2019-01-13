@@ -1,4 +1,12 @@
-﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
 
 Shader "Instanced/Terrain" {
 	Properties{
@@ -6,16 +14,30 @@ Shader "Instanced/Terrain" {
 
 		_Textures("Textures", 2DArray) = "" {}
 
+
+		_HeightMin("Height Min", Float) = -1
+		_HeightMax("Height Max", Float) = 1
 		_textureblend("bluer Texture", Range(0,0.1)) = 1
-			
+
+			_rX("RotateX", float) = 0
+		_rY("RotateY", float) = 0
+		_rZ("RotateZ", float) = 0
+
+
+			_tX("TranslateX", float) = 0
+		_tY("TranslateY", float) = 0
+		_tZ("TranslateZ", float) = 0
+
+			_Angle("Angle", float) = 1
 	}
 		SubShader{
-			Tags { "RenderType" = "Opaque" }
+			Tags {"LightMode" = "ForwardBase"}
+			Tags { "RenderType" = "Opaque" "DisableBatching" = "True"  }
+
 			LOD 200
 
 			CGPROGRAM
-// Upgrade NOTE: excluded shader from DX11, OpenGL ES 2.0 because it uses unsized arrays
-#pragma exclude_renderers d3d11 gles
+
 			// Physically based Standard lighting model, and enable shadows on all light types
 			#pragma surface surf Standard addshadow fullforwardshadows vertex:vert
 			#pragma multi_compile_instancing
@@ -23,6 +45,7 @@ Shader "Instanced/Terrain" {
 
 			// Use shader model 3.0 target, to get nicer looking lighting
 			#pragma target 3.0
+			#include "UnityCG.cginc"
 
 			sampler2D _HeightTex;
 		/*****************************************************************
@@ -31,17 +54,21 @@ Shader "Instanced/Terrain" {
 			y -> Max terrain height
 			********************************************************************/
 			float3 _PlanetInfo;
-
+			float _tX, _tY, _tZ;
+			float _rX, _rY, _rZ;
+			uniform float _Angle;
 			UNITY_DECLARE_TEX2DARRAY(_Textures);
-				
+
 			struct Input {
 				float2 uv_MainTex;
 				fixed2 uv_Textures;
 				float3 worldPos;
 			};
+		
 
 			#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
 				StructuredBuffer<float4> positionBuffer;
+				StructuredBuffer<float4> directionsBuffer;
 			#endif
 
 				void rotate2D(inout float2 v, float r)
@@ -55,6 +82,8 @@ Shader "Instanced/Terrain" {
 				{
 				#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
 					float4 data = positionBuffer[unity_InstanceID];
+					float4 transform = directionsBuffer[unity_InstanceID];
+
 
 					unity_ObjectToWorld._11_21_31_41 = float4(data.w, 0, 0, 0);
 					unity_ObjectToWorld._12_22_32_42 = float4(0, data.w, 0, 0);
@@ -62,14 +91,40 @@ Shader "Instanced/Terrain" {
 					unity_ObjectToWorld._14_24_34_44 = float4(data.x, data.y, data.z, 1);
 					unity_WorldToObject = unity_ObjectToWorld;
 					unity_WorldToObject._14_24_34 *= -1;
-					unity_WorldToObject._11_22_33 = 1.0f / unity_WorldToObject._11_22_33; 
+					unity_WorldToObject._11_22_33 = 1.0f / unity_WorldToObject._11_22_33;
 				#endif
 				}
 
 			int _TexturesArrayLength;
 			float _TexturesArray[20];
 
+
+			float _HeightMin;
+			float _HeightMax;
+
 			float _textureblend;
+
+			float4 RotateAroundYInDegrees(float4 vertex, float degrees)
+			{
+				float alpha = degrees * UNITY_PI / 180.0;
+				float sina, cosa;
+				sincos(alpha, sina, cosa);
+				float2x2 m = float2x2(cosa, -sina, sina, cosa);
+				return float4(mul(m, vertex.xz), vertex.yw).xzyw;
+			}
+
+			float3x3 YRotationMatrix(float degrees)
+			{
+				float alpha = degrees * UNITY_PI / 180.0;
+				float sina, cosa;
+				sincos(alpha, sina, cosa);
+
+				return float3x3(
+					cosa, sina, 0,
+					-sina, cosa, 0,
+					0, 0, 1);
+			}
+
 
 			void vert(inout appdata_full v) {
 			#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
@@ -80,8 +135,8 @@ Shader "Instanced/Terrain" {
 
 				float x = wolrldPosition.x;
 				float z = wolrldPosition.z;
-		
-				v.vertex.y = (tex2Dlod(_HeightTex, float4(x, z, 0, 0) - 1) * _PlanetInfo.y + _PlanetInfo.x) / data.w;
+
+				//v.vertex.y =  (tex2Dlod(_HeightTex, float4(x, z, 0, 0) - 1) * _PlanetInfo.y + _PlanetInfo.x) / data.w;
 			#endif
 			}
 
@@ -94,10 +149,10 @@ Shader "Instanced/Terrain" {
 
 			void surf(Input IN, inout SurfaceOutputStandard o) {
 
-				float h = (_PlanetInfo.y + _PlanetInfo.x - IN.worldPos.y) / (_PlanetInfo.y );
+				float h = (_PlanetInfo.y + _PlanetInfo.x - IN.worldPos.y) / (_PlanetInfo.y);
 
 				int index = 0;
-			
+
 				for (int i = 0; i < _TexturesArrayLength; i++) {
 					if (h >= _TexturesArray[i]) {
 						index = i;
@@ -105,17 +160,17 @@ Shader "Instanced/Terrain" {
 					}
 				}
 
-				
-			
+
+
 
 				fixed4 c = UNITY_SAMPLE_TEX2DARRAY(_Textures, float3(IN.uv_Textures, UNITY_ACCESS_INSTANCED_PROP(index_arr, index)));
 
 
-				/***********************				
+				/***********************
 					Rozmazí krajních bodů textůr
 				********************/
 
-				if (((h - _textureblend) < _TexturesArray[index]) && index > 0){
+				if (((h - _textureblend) < _TexturesArray[index]) && index > 0) {
 					float 	g = (_textureblend - h + _TexturesArray[index]) / (_textureblend * 2 + 0.001);
 					fixed4 d = UNITY_SAMPLE_TEX2DARRAY(_Textures, float3(IN.uv_Textures, UNITY_ACCESS_INSTANCED_PROP(index_arr, index + 1)));
 					c = lerp(c, d, g);
@@ -123,20 +178,20 @@ Shader "Instanced/Terrain" {
 				else if ((index > 0) && ((h + _textureblend) > _TexturesArray[index - 1])) {
 					float g;
 					if (index == 1) {
-						g = (_textureblend + h - _TexturesArray[index - 1]) / (_textureblend  + 0.001);
+						g = (_textureblend + h - _TexturesArray[index - 1]) / (_textureblend + 0.001);
 					}
 					else {
 						g = (_textureblend + h - _TexturesArray[index - 1]) / (_textureblend * 2 + 0.001);
 					}
-				
-					fixed4 d = UNITY_SAMPLE_TEX2DARRAY(_Textures, float3(IN.uv_Textures, UNITY_ACCESS_INSTANCED_PROP(index_arr, index - 1))); 
+
+					fixed4 d = UNITY_SAMPLE_TEX2DARRAY(_Textures, float3(IN.uv_Textures, UNITY_ACCESS_INSTANCED_PROP(index_arr, index - 1)));
 					c = lerp(c, d, g);
 				}
 
 
-				o.Albedo = c.rgb;
+				o.Albedo =  c.rgb;
 				o.Alpha = 1;
-			
+
 
 			}
 			ENDCG

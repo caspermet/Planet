@@ -2,15 +2,16 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Chunk {
+public class Chunk
+{
     const float viewerMoveThresholdForChunkUpdate = 50f;
     const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
 
     private List<Vector4> positionsList = new List<Vector4>();
-    private List<Vector3> directionList = new List<Vector3>();
+    private List<Vector4> directionList = new List<Vector4>();
 
     private Vector4[] viewedChunkCoord;
-    private Vector3[] directionArray;
+    private Vector4[] directionArray;
 
     private float scale;
     private int chunkSize = 200;
@@ -19,17 +20,24 @@ public class Chunk {
 
     private Material material;
 
-    private DrawMesh drawMesh;
+    private DrawMesh[] drawMesh;
 
     private static Vector3 viewerPosition;
     private static Vector3 viewerPositionOld;
     private Transform viewer;
 
-    private ChunkFace chunkFace;
+    private ChunkFace[] chunkFace;
 
     private MeshData meshData;
 
-    public Chunk(float scale, int chunkSize,  Material instanceMaterial, Transform viewer)
+    private Vector3[] directions;
+    private Vector3[] directions2;
+
+    private Mesh[] mesh;
+
+    int stany = 3;
+
+    public Chunk(float scale, int chunkSize, Material instanceMaterial, Transform viewer)
     {
         this.scale = scale;
         this.chunkSize = chunkSize;
@@ -38,30 +46,56 @@ public class Chunk {
         planetRadius = (chunkSize - 1) * scale / 2;
 
         viewerPosition = viewer.position;
+        viewerPositionOld = viewerPosition;
+        directions = new Vector3[]{ new Vector3(-1,0, 0), new Vector3(1, 0, 0), new Vector3(0, 0, 1), new Vector3(0, 0, -1), new Vector3(0, 0, 1), new Vector3(0, 0, -1) };
+        directions2 = new Vector3[] { new Vector3(0, -1, 0), new Vector3(0, -1, 0), new Vector3(0, -1, 0), new Vector3(0, -1, 0), new Vector3(-1, 0, 0), new Vector3(-1, 0, 0) };
 
-        Vector3[] directions = { Vector3.up, Vector3.down, Vector3.left, Vector3.right, Vector3.forward, Vector3.back };
+        CreateMeshArray();
 
+        chunkFace = new ChunkFace[6];
+        drawMesh = new DrawMesh[6];
 
-
-       /* for (int i = 0; i < 6; i++)
+        chunkFace[0] = new ChunkFace(null, new Vector3(0, 0, 100), this.scale, (chunkSize - 1), viewerPosition, directions[0], directions2[0]);
+        chunkFace[1] = new ChunkFace(null, new Vector3(0, 0, 500), this.scale, (chunkSize - 1), viewerPosition, directions[1], directions2[1]);
+        chunkFace[2] = new ChunkFace(null, new Vector3(0, 500, 0), this.scale, (chunkSize - 1), viewerPosition, directions[2], directions2[2]);
+       /* chunkFace[3] = new ChunkFace(null, new Vector3(planetRadius, 0, 0), this.scale, (chunkSize - 1), viewerPosition, directions[3], directions2[3]);
+        chunkFace[4] = new ChunkFace(null, new Vector3(0, planetRadius, 0), this.scale, (chunkSize - 1), viewerPosition, directions[4], directions2[4]);
+        chunkFace[5] = new ChunkFace(null, new Vector3(0, -planetRadius, 0), this.scale, (chunkSize - 1), viewerPosition, directions[5], directions2[5]);
+        */
+        for (int i = 0; i < stany; i++)
         {
-            chunkFace[i] = new ChunkFace(null, new Vector3(0, planetRadius, 0), this.scale, (chunkSize - 1), viewerPosition, directions[i]);
-        }*/
+            drawMesh[i] = new DrawMesh(mesh[0], instanceMaterial);          
+        }
+        finalize();
 
-        chunkFace = new ChunkFace(null, new Vector3(0, planetRadius, 0), this.scale, (chunkSize - 1), viewerPosition, directions[0]);
 
-        meshData = MeshGenerator.GenerateTerrainMesh(chunkSize);
-        meshData.CreateMesh();
+    }
 
-        drawMesh = new DrawMesh(meshData.GetMesh(), instanceMaterial);
+    private void finalize()
+    {
+        for (int i = 0; i < stany; i++)
+        {
+            positionsList.Clear();
+            directionList.Clear();
+            chunkFace[i].Update(viewerPosition);
 
-        positionsList = chunkFace.GetPositionList();
-        directionList = chunkFace.GetDirectionList();
+            positionsList = chunkFace[i].GetPositionList();
+            directionList = chunkFace[i].GetDirectionList();
 
-        viewedChunkCoord = positionsList.ToArray();
-        directionArray = directionList.ToArray();
+            viewedChunkCoord = positionsList.ToArray();
+            directionArray = directionList.ToArray();
 
-        drawMesh.UpdateData(positionsList.Count, viewedChunkCoord, directionArray);
+            for (int o = 0; o < viewedChunkCoord.Length; o++)
+            {
+               
+                Debug.Log(viewedChunkCoord[o]);
+            }
+            Debug.Log(viewedChunkCoord.Length);
+            if (chunkFace[i].GetPositionList().Count > 0)
+            {
+                drawMesh[i].UpdateData(chunkFace[i].GetPositionList().Count, viewedChunkCoord, directionArray);
+            }
+        }
     }
 
     public void Update(Material instanceMaterial)
@@ -70,39 +104,41 @@ public class Chunk {
 
         if (viewerPositionOld != viewerPosition)
         {
-            viewerPositionOld = viewerPosition;
-
-            UpdateChunkMesh();
+           viewerPositionOld = viewerPosition;
+          // finalize();
         }
-         
-        if (positionsList.Count > 0)
+
+        for (int i = 0; i < stany; i++)
         {
-           
-            drawMesh.Draw();
+            drawMesh[i].Draw();           
         }
     }
 
     private void UpdateChunkMesh()
-    {      
-        positionsList.Clear();
-        directionList.Clear();
-
-        chunkFace.Update(viewerPosition);
-        positionsList = chunkFace.GetPositionList();
-        directionList = chunkFace.GetDirectionList();
-
-        viewedChunkCoord = positionsList.ToArray();
-        directionArray = directionList.ToArray();
-
-        if (viewedChunkCoord.Length > 0)
-        {
-            drawMesh.UpdateData(positionsList.Count, viewedChunkCoord, directionArray);
-        }
+    {
+        finalize();
     }
+
 
 
     public void Disable()
     {
-        drawMesh.Disable();
+        for (int i = 0; i < stany; i++)
+        {
+            drawMesh[i].Disable();
+        }
     }
+
+    private void CreateMeshArray()
+    {
+        MeshData meshData;
+        mesh = new Mesh[6];
+
+        for (int i = 0; i < directions.Length; i++)
+        {
+            meshData = MeshGenerator.GenerateTerrainMesh(chunkSize, directions[i], directions2[i]);
+            mesh[i] = meshData.CreateMesh();
+        }
+    }
+
 }
