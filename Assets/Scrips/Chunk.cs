@@ -8,7 +8,10 @@ public class Chunk
     const float sqrViewerMoveThresholdForChunkUpdate = viewerMoveThresholdForChunkUpdate * viewerMoveThresholdForChunkUpdate;
 
     private List<Vector4> positionsList = new List<Vector4>();
+    private List<Vector4> directionList = new List<Vector4>();
+
     private Vector4[] viewedChunkCoord;
+    private Vector4[] directionArray;
 
     private float scale;
     private int chunkSize = 200;
@@ -27,8 +30,12 @@ public class Chunk
 
     private MeshData meshData;
 
+    private Vector3[] directions;
+
     public Chunk(float scale, int chunkSize, Material instanceMaterial, Transform viewer)
     {
+        directions = new Vector3[] { new Vector3(-1, 0, 0), new Vector3(1, 0, 0), new Vector3(0, 0, 1), new Vector3(0, 0, -1), new Vector3(0, 0, 1), new Vector3(0, 0, -1) };
+
         this.scale = scale;
         this.chunkSize = chunkSize;
         this.viewer = viewer;
@@ -37,16 +44,20 @@ public class Chunk
 
         viewerPosition = viewer.position;
 
-        chunkFace = new ChunkFace(null, new Vector3(0, planetRadius, 0), this.scale, (chunkSize - 1), viewerPosition);
+        chunkFace = new ChunkFace(null, new Vector3(0, planetRadius, 0), this.scale, (chunkSize - 1), viewerPosition, directions[0]);
         meshData = MeshGenerator.GenerateTerrainMesh(chunkSize);
         meshData.CreateMesh();
 
         drawMesh = new DrawMesh(meshData.GetMesh(), instanceMaterial);
+        
         positionsList = chunkFace.GetPositionList();
-        viewedChunkCoord = positionsList.ToArray();
+        directionList = chunkFace.GetDirectionList();
 
-        drawMesh.UpdateData(positionsList.Count, viewedChunkCoord);
-        //UpdateChunkMesh();
+        viewedChunkCoord = positionsList.ToArray();
+        directionArray = directionList.ToArray();
+
+        drawMesh.UpdateData(positionsList.Count, viewedChunkCoord, directionArray) ;
+      //  UpdateChunkMesh();
     }
 
     public void Update(Material instanceMaterial)
@@ -59,6 +70,7 @@ public class Chunk
 
             UpdateChunkMesh();
             viewedChunkCoord = positionsList.ToArray();
+
         }
 
         if (positionsList.Count > 0)
@@ -70,14 +82,20 @@ public class Chunk
 
     private void UpdateChunkMesh()
     {
+       
         positionsList.Clear();
+        directionList.Clear();
 
         positionsList = chunkFace.Update(viewerPosition);
+        directionList = chunkFace.GetDirectionList();
 
-        Vector4[] viewedChunkCoord = positionsList.ToArray();
+        viewedChunkCoord = positionsList.ToArray();
+        directionArray = directionList.ToArray();
+        Debug.Log(positionsList.Count);
         if (viewedChunkCoord.Length > 0)
         {
-            drawMesh.UpdateData(positionsList.Count, viewedChunkCoord);
+            Debug.Log("console");
+            drawMesh.UpdateData(positionsList.Count, viewedChunkCoord, directionArray);
         }
     }
 

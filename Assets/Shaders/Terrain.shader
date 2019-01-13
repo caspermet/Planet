@@ -49,6 +49,7 @@ Shader "Instanced/Terrain" {
 
 			#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
 				StructuredBuffer<float4> positionBuffer;
+				
 			#endif
 
 				void rotate2D(inout float2 v, float r)
@@ -62,6 +63,7 @@ Shader "Instanced/Terrain" {
 				{
 				#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
 					float4 data = positionBuffer[unity_InstanceID];
+				
 
 					unity_ObjectToWorld._11_21_31_41 = float4(data.w, 0, 0, 0);
 					unity_ObjectToWorld._12_22_32_42 = float4(0, data.w, 0, 0);
@@ -85,14 +87,38 @@ Shader "Instanced/Terrain" {
 			float3x3 RotateAroundYInDegrees(float degrees)
 			{
 				float alpha = degrees * UNITY_PI / 180.0;
-				float s = sin(alpha);
-				float c = cos(alpha);
-				//But how can I insert the pivot???
-				return float3x3(
-					c, 0, -s,
-					0, 1, 0,
-					s, 0, c);
+				float sina, cosa;
+				sincos(alpha, sina, cosa);
 			
+			
+				return float3x3(
+					cosa, 0, -sina,
+					0,    1, 0,
+					sina, 0, cosa);
+			}
+			float3x3 RotateAroundXInDegrees(float degrees)
+			{
+				float alpha = degrees * UNITY_PI / 180.0;
+				float sina, cosa;
+				sincos(alpha, sina, cosa);
+			
+				return float3x3(
+					1, 0,		0,
+					0, cosa,	sina,
+					0, -sina,	cosa);
+
+			}
+			float3x3 RotateAroundZInDegrees(float degrees)
+			{
+				float alpha = degrees * UNITY_PI / 180.0;
+				float sina, cosa;
+				sincos(alpha, sina, cosa);
+				
+				return float3x3(
+					cosa,	sina,	0,
+					-sina,	cosa,	0,
+					0,		0,		1);
+
 			}
 
 			void vert(inout appdata_full v) {
@@ -109,7 +135,9 @@ Shader "Instanced/Terrain" {
 				float4 pos = v.vertex;
 			
 
-				v.vertex.xyz = mul(RotateAroundYInDegrees(_Angle), pos.xyz);
+				//v.vertex.xyz = mul(RotateAroundXInDegrees(_Angle), pos.xyz);
+
+
 				v.vertex.y = (tex2Dlod(_HeightTex, float4(x , z , 0, 0) - 1) * _PlanetInfo.y + _PlanetInfo.x) / data.w;
 				
 				#endif
@@ -136,7 +164,7 @@ Shader "Instanced/Terrain" {
 					}
 				}
 
-				fixed4 c = UNITY_SAMPLE_TEX2DARRAY(_Textures, float3(IN.uv_Textures, UNITY_ACCESS_INSTANCED_PROP( index_arr, index)));
+				fixed4 c = UNITY_SAMPLE_TEX2DARRAY(_Textures, float3(IN.uv_Textures,  index));
 
 
 				/***********************
