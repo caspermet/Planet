@@ -4,34 +4,23 @@ using System.Collections;
 public static class MeshGenerator
 {
 
-    public static MeshData GenerateTerrainMesh(int chunkSize, Vector3 localUp, Vector3 localUp2)
+    public static MeshData GenerateTerrainMesh(int chunkSize)
     {
 
         int width = chunkSize;
         int height = chunkSize;
         float topLeftX = (width - 1) / -2f;
         float topLeftZ = (height - 1) / 2f;
-        Vector3 position = new Vector3(0, 0, 0);
-
-        position -= localUp * chunkSize * 0.5f;
-        position -= localUp2 * chunkSize * 0.5f;
 
         MeshData meshData = new MeshData(width, height);
         int vertexIndex = 0;
-
-        Vector3 axisA = new Vector3(localUp.y, localUp.z, localUp.x);
-        Vector3 axisB = Vector3.Cross(localUp, axisA);
-        Vector3 vertex;
 
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
 
-                var vx = localUp * x;
-                var vz = localUp2 * y;
-   
-                meshData.vertices[vertexIndex] = position + vx + vz;
+                meshData.vertices[vertexIndex] = new Vector3((topLeftX + x), 0, (topLeftZ - y));
                 meshData.uvs[vertexIndex] = new Vector2(x / (float)width, y / (float)height);
 
                 if (x < width - 1 && y < height - 1)
@@ -45,7 +34,6 @@ public static class MeshGenerator
         }
         meshData.CreateMesh();
 
-
         return meshData;
 
     }
@@ -56,8 +44,6 @@ public class MeshData
     public Vector3[] vertices;
     public int[] triangles;
     public Vector2[] uvs;
-
-    public float scale;
 
     private Mesh mesh;
 
@@ -78,7 +64,7 @@ public class MeshData
         triangleIndex += 3;
     }
 
-    public Mesh CreateMesh()
+    public void CreateMesh()
     {
         mesh = new Mesh();
         mesh.vertices = vertices;
@@ -86,7 +72,6 @@ public class MeshData
         mesh.uv = uvs;
         mesh.RecalculateNormals();
 
-        return mesh;
     }
 
     public Mesh GetMesh()

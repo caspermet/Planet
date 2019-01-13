@@ -1,12 +1,4 @@
-﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
-
-// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
 
 Shader "Instanced/Terrain" {
 	Properties{
@@ -19,25 +11,12 @@ Shader "Instanced/Terrain" {
 		_HeightMax("Height Max", Float) = 1
 		_textureblend("bluer Texture", Range(0,0.1)) = 1
 
-			_rX("RotateX", float) = 0
-		_rY("RotateY", float) = 0
-		_rZ("RotateZ", float) = 0
-
-
-			_tX("TranslateX", float) = 0
-		_tY("TranslateY", float) = 0
-		_tZ("TranslateZ", float) = 0
-
-			_Angle("Angle", float) = 1
 	}
 		SubShader{
-			Tags {"LightMode" = "ForwardBase"}
-			Tags { "RenderType" = "Opaque" "DisableBatching" = "True"  }
-
+			Tags { "RenderType" = "Opaque" }
 			LOD 200
 
 			CGPROGRAM
-
 			// Physically based Standard lighting model, and enable shadows on all light types
 			#pragma surface surf Standard addshadow fullforwardshadows vertex:vert
 			#pragma multi_compile_instancing
@@ -45,7 +24,6 @@ Shader "Instanced/Terrain" {
 
 			// Use shader model 3.0 target, to get nicer looking lighting
 			#pragma target 3.0
-			#include "UnityCG.cginc"
 
 			sampler2D _HeightTex;
 		/*****************************************************************
@@ -54,9 +32,7 @@ Shader "Instanced/Terrain" {
 			y -> Max terrain height
 			********************************************************************/
 			float3 _PlanetInfo;
-			float _tX, _tY, _tZ;
-			float _rX, _rY, _rZ;
-			uniform float _Angle;
+
 			UNITY_DECLARE_TEX2DARRAY(_Textures);
 
 			struct Input {
@@ -64,11 +40,9 @@ Shader "Instanced/Terrain" {
 				fixed2 uv_Textures;
 				float3 worldPos;
 			};
-		
 
 			#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
 				StructuredBuffer<float4> positionBuffer;
-				StructuredBuffer<float4> directionsBuffer;
 			#endif
 
 				void rotate2D(inout float2 v, float r)
@@ -82,8 +56,6 @@ Shader "Instanced/Terrain" {
 				{
 				#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
 					float4 data = positionBuffer[unity_InstanceID];
-					float4 transform = directionsBuffer[unity_InstanceID];
-
 
 					unity_ObjectToWorld._11_21_31_41 = float4(data.w, 0, 0, 0);
 					unity_ObjectToWorld._12_22_32_42 = float4(0, data.w, 0, 0);
@@ -104,15 +76,6 @@ Shader "Instanced/Terrain" {
 
 			float _textureblend;
 
-			float4 RotateAroundYInDegrees(float4 vertex, float degrees)
-			{
-				float alpha = degrees * UNITY_PI / 180.0;
-				float sina, cosa;
-				sincos(alpha, sina, cosa);
-				float2x2 m = float2x2(cosa, -sina, sina, cosa);
-				return float4(mul(m, vertex.xz), vertex.yw).xzyw;
-			}
-
 			float3x3 YRotationMatrix(float degrees)
 			{
 				float alpha = degrees * UNITY_PI / 180.0;
@@ -125,7 +88,6 @@ Shader "Instanced/Terrain" {
 					0, 0, 1);
 			}
 
-
 			void vert(inout appdata_full v) {
 			#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
 
@@ -136,7 +98,9 @@ Shader "Instanced/Terrain" {
 				float x = wolrldPosition.x;
 				float z = wolrldPosition.z;
 
-				//v.vertex.y =  (tex2Dlod(_HeightTex, float4(x, z, 0, 0) - 1) * _PlanetInfo.y + _PlanetInfo.x) / data.w;
+				//float step = sqrt(_PlanetInfo.x * _PlanetInfo.x + x * x + z * z) - _PlanetInfo.x;
+
+				v.vertex.y = (tex2Dlod(_HeightTex, float4(x , z , 0, 0) - 1) * _PlanetInfo.y + _PlanetInfo.x) / data.w;
 			#endif
 			}
 
@@ -159,9 +123,6 @@ Shader "Instanced/Terrain" {
 						break;
 					}
 				}
-
-
-
 
 				fixed4 c = UNITY_SAMPLE_TEX2DARRAY(_Textures, float3(IN.uv_Textures, UNITY_ACCESS_INSTANCED_PROP(index_arr, index)));
 
@@ -189,7 +150,7 @@ Shader "Instanced/Terrain" {
 				}
 
 
-				o.Albedo =  c.rgb;
+				o.Albedo = c.rgb;
 				o.Alpha = 1;
 
 

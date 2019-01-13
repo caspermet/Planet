@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MapGenerator : MonoBehaviour {
+public class MapGenerator : MonoBehaviour
+{
 
     public Transform viewer;
     public Material instanceMaterial;
@@ -22,24 +23,19 @@ public class MapGenerator : MonoBehaviour {
     public float[] planetTextureRange;
     private float[] planetTextureRangeOld;
 
-
-    [SerializeField, HideInInspector]
-    MeshFilter[] meshFilters;
-    MeshData[] terrainFaces;
-
     void Start()
     {
 
-          planetInfo.x = (chunkSize - 1) * maxScale / 2;
-          planetInfo.y = maxTerrainHeight;
+        planetInfo.x = (chunkSize - 1) * maxScale / 2;
+        planetInfo.y = maxTerrainHeight;
 
-          instanceMaterial.SetTexture("_Textures", LoadArrayTexture.DoTexture(planetTexture));
+        instanceMaterial.SetTexture("_Textures", LoadArrayTexture.DoTexture(planetTexture));
 
-          instanceMaterial.SetInt("_TexturesArrayLength", planetTextureRange.Length);
-          instanceMaterial.SetFloatArray("_TexturesArray", planetTextureRange);
-          instanceMaterial.SetVector("_PlanetInfo", planetInfo);
+        instanceMaterial.SetInt("_TexturesArrayLength", planetTextureRange.Length);
+        instanceMaterial.SetFloatArray("_TexturesArray", planetTextureRange);
+        instanceMaterial.SetVector("_PlanetInfo", planetInfo);
 
-          chunk = new Chunk(maxScale,  chunkSize, instanceMaterial, viewer);
+        chunk = new Chunk(maxScale, chunkSize, instanceMaterial, viewer);
     }
 
     void Update()
