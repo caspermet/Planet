@@ -56,14 +56,12 @@ Shader "Instanced/Terrain" {
 				{
 				#ifdef UNITY_PROCEDURAL_INSTANCING_ENABLED
 					float4 data = positionBuffer[unity_InstanceID];
-				
-
 					unity_ObjectToWorld._11_21_31_41 = float4(data.w, 0, 0, 0);
 					unity_ObjectToWorld._12_22_32_42 = float4(0, data.w, 0, 0);
 					unity_ObjectToWorld._13_23_33_43 = float4(0, 0, data.w, 0);
 					unity_ObjectToWorld._14_24_34_44 = float4(data.x, data.y, data.z, 1);
 					unity_WorldToObject = unity_ObjectToWorld;
-					unity_WorldToObject._14_24_34 *= -1;
+					unity_WorldToObject._14_24_34 *= -1 / data.w;
 					unity_WorldToObject._11_22_33 = 1.0f / unity_WorldToObject._11_22_33;
 				#endif
 				}
@@ -122,11 +120,13 @@ Shader "Instanced/Terrain" {
 
 				float4 wolrldPosition = mul(unity_ObjectToWorld, v.vertex) / 5000;
 
-				float x = wolrldPosition.x;
-				float z = wolrldPosition.z;
+				/*float x = wolrldPosition.x;
+				float z = wolrldPosition.z;*/
 
 				float4 pos = v.vertex;
-				
+
+				float r = _PlanetInfo.x;
+
 				if (transform.x != 0) {
 					v.vertex.xyz = mul(RotateAroundXInDegrees(transform.x * 90), pos.xyz);
 				}
@@ -136,12 +136,24 @@ Shader "Instanced/Terrain" {
 				else if(transform.z == -1){
 					v.vertex.xyz = mul(RotateAroundZInDegrees(transform.z * 180), pos.xyz);
 				}
+				v.vertex = mul(unity_ObjectToWorld, v.vertex);
 
+
+				float x = v.vertex.x / _PlanetInfo.x;
+				float y = v.vertex.y / _PlanetInfo.x;
+				float z = v.vertex.z / _PlanetInfo.x;
+				
+				float dx = x * sqrt(1.0f - (y*y * 0.5f) - (z * z * 0.5f) + (y*y*z*z / 3.0f));
+				float dy = y * sqrt(1.0f - (z*z * 0.5f) - (x * x * 0.5f) + (z*z*x*x / 3.0f));
+				float dz = z * sqrt(1.0f - (x*x * 0.5f) - (y * y * 0.5f) + (x*x*y*y / 3.0f));
+				
+				v.vertex.xyz = float3(dx, dy, dz) * _PlanetInfo.x;
+				
+				v.vertex = mul(unity_WorldToObject, v.vertex);
+				v.vertex.xyz += normalize(v.vertex.xyz) * (tex2Dlod(_HeightTex, float4(x, z, 0, 0)) * _PlanetInfo.y) / data.w;
 				
 				//v.vertex.xyz = normalize(UnityWorldSpaceViewDir(v.vertex.xyz);
-
-
-				//v.vertex.y = (tex2Dlod(_HeightTex, float4(x , z , 0, 0) - 1) * _PlanetInfo.y + _PlanetInfo.x) / data.w;
+			
 				
 				#endif
 				}
@@ -193,7 +205,7 @@ Shader "Instanced/Terrain" {
 				}
 
 
-				o.Albedo = c.rgb;
+				o.Albedo =  c.rgb;
 				o.Alpha = 1;
 
 

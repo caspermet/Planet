@@ -60,6 +60,7 @@
      <Compile Include="Assets\Scrips\MapGenerator.cs" />
      <Compile Include="Assets\Scrips\maxCamera.cs" />
      <Compile Include="Assets\Scrips\MeshGenerator.cs" />
+     <None Include="Assets\Material\NewUnlitShader.shader" />
      <None Include="Assets\Shaders\Terrain.shader" />
      <None Include="Assets\Shaders\InstancedSurfaceShader.shader" />
  <Reference Include="UnityEditor.StandardEvents">
